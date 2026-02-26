@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Background scale */
+  --color-bg-deep: #050507;
+  --color-bg-base: #0a0a0f;
+  --color-bg-card: #141720;
+  --color-bg-elevated: #1c1f2e;
+  --color-bg-overlay: #252836;
+
+  /* Glass */
+  --color-glass: rgba(200, 169, 110, 0.03);
+  --color-glass-border: rgba(200, 169, 110, 0.08);
+  --color-glass-hover: rgba(200, 169, 110, 0.06);
+  --color-glass-card: rgba(12, 12, 18, 0.6);
+
+  /* Borders */
+  --color-border-default: rgba(200, 169, 110, 0.1);
+  --color-border-strong: rgba(200, 169, 110, 0.08);
+  --color-border-subtle: rgba(255, 255, 255, 0.04);
+
+  /* Text */
+  --color-text-primary: #ededef;
+  --color-text-secondary: #a1a1aa;
+  --color-text-muted: #71717a;
+  --color-text-faint: #52525b;
+
+  /* Accent (warm gold) */
+  --color-accent: #c9a96e;
+  --color-accent-hover: #d4b87e;
+  --color-accent-muted: #3d3222;
+  --color-accent-subtle: #2a2318;
+  --color-accent-fg: #0f0e0a;
+  --color-accent-dim: rgba(201, 169, 110, 0.15);
+  --color-accent-glow: rgba(201, 169, 110, 0.08);
+
+  /* Error */
+  --color-error: #f87171;
+  --color-error-muted: #2a1215;
+
+  /* Font */
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background: var(--color-bg-deep);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  margin: 0;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border-default); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-accent); }

@@ -107,12 +107,16 @@ export function PlannerView() {
   const handleBulkAction = useCallback((action: string, value: string) => {
     if (action === "delete") {
       selectedNodes.forEach((id) => deleteNode(id));
-      setSelectedNodes([]);
-      setSelectMode(false);
-    } else {
-      console.log("Bulk action:", action, value, "on nodes:", selectedNodes);
+    } else if (action === "status") {
+      selectedNodes.forEach((id) => updateNode(id, { status: value as import("@/lib/types").TaskStatus }));
+    } else if (action === "priority") {
+      selectedNodes.forEach((id) => updateNode(id, { priority: value as import("@/lib/types").Priority }));
+    } else if (action === "worker") {
+      selectedNodes.forEach((id) => updateNode(id, { worker: value }));
     }
-  }, [selectedNodes, deleteNode]);
+    setSelectedNodes([]);
+    setSelectMode(false);
+  }, [selectedNodes, deleteNode, updateNode]);
 
   const toggleExp = useCallback(
     (id: string) => setExpanded((p) => ({ ...p, [id]: !p[id] })),

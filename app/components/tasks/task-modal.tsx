@@ -11,7 +11,7 @@ import { getActionIcon } from "@/lib/constants/icons";
 import { TASK_ACTIONS } from "./task-actions-config";
 import type { Task } from "@/lib/types";
 import { ST, PRI } from "@/lib/constants/status";
-import { useWorkers, useProjects, useTaskDetail } from "@/lib/hooks";
+import { useWorkers, useProjects, useTaskDetail, useTasks } from "@/lib/hooks";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
@@ -33,6 +33,7 @@ interface TaskModalProps {
 export function TaskModal({ task, onClose }: TaskModalProps) {
   const { workers } = useWorkers();
   const { projects } = useProjects();
+  const { updateStatus, deleteTask } = useTasks();
   const { detail, toggleSubtask, addComment } = useTaskDetail(task.id);
   const worker = workers.find((w) => w.id === task.w);
   const sc = ST[task.s];
@@ -477,7 +478,10 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
                   <Button
                     key={action.id}
                     primary={action.variant === "primary"}
-                    onClick={() => console.log("Task modal action:", action.id, task.id)}
+                    onClick={() => {
+                      if (action.id === "delete") { deleteTask(task.id); onClose(); }
+                      else if (action.targetStatus) { updateStatus(task.id, action.targetStatus); onClose(); }
+                    }}
                   >
                     <Icon size={14} /> {action.label}
                   </Button>

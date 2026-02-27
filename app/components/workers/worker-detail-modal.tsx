@@ -1,8 +1,8 @@
 "use client";
 
 import type { Worker } from "@/lib/types";
-import { TASKS } from "@/lib/data/tasks";
 import { HUMAN_SKILLS } from "@/lib/data/workers";
+import { useTasks, useWorkers } from "@/lib/hooks";
 import { Modal } from "@/components/ui/modal";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusDot } from "@/components/ui/status-dot";
@@ -17,9 +17,12 @@ interface WorkerDetailModalProps {
 }
 
 export function WorkerDetailModal({ worker, onClose }: WorkerDetailModalProps) {
+  const { tasks } = useTasks();
+  const { updateWorker, deleteWorker } = useWorkers();
+
   if (!worker) return null;
 
-  const activeTasks = TASKS.filter((t) => t.w === worker.id && t.s !== "completed");
+  const activeTasks = tasks.filter((t) => t.w === worker.id && t.s !== "completed");
 
   return (
     <Modal open={!!worker} onClose={onClose} title={worker.name} maxWidth="max-w-md">
@@ -116,10 +119,10 @@ export function WorkerDetailModal({ worker, onClose }: WorkerDetailModalProps) {
 
       {/* Footer */}
       <div className="flex gap-2 p-4 border-t border-border-default">
-        <Button onClick={() => console.log("Pause worker:", worker.id)}>
-          <Pause size={12} /> Pause Worker
+        <Button onClick={() => { updateWorker(worker.id, { status: worker.status === "offline" ? "online" : "offline" }); onClose(); }}>
+          <Pause size={12} /> {worker.status === "offline" ? "Activate" : "Pause"} Worker
         </Button>
-        <Button onClick={() => console.log("Remove worker:", worker.id)}>
+        <Button onClick={() => { deleteWorker(worker.id); onClose(); }}>
           <Trash2 size={12} /> Remove
         </Button>
       </div>

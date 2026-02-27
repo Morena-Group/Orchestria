@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { REPORT_BLOCKS } from "@/lib/data/briefings";
-import { useProjects } from "@/lib/hooks";
+import { useProjects, useBriefings } from "@/lib/hooks";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ReportBlock } from "./report-block";
@@ -40,6 +40,7 @@ export const BLOCK_ICON_MAP: Record<string, LucideIcon> = {
 
 export function BriefingsView() {
   const { projects } = useProjects();
+  const { saveTemplate } = useBriefings();
   const [blocks, setBlocks] = useState<string[]>(
     REPORT_BLOCKS.filter((b) => b.default).map((b) => b.id)
   );
@@ -64,7 +65,7 @@ export function BriefingsView() {
               Generated {generated}
             </span>
           )}
-          <Button onClick={() => console.log("Save briefing template")}>
+          <Button onClick={() => saveTemplate("Briefing Template", blocks)}>
             <Save size={12} /> Save Template
           </Button>
           <Button onClick={() => console.log("Export briefing PDF")}>

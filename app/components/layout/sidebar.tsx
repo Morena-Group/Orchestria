@@ -27,7 +27,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { activeProjectId, setActiveProjectId } = useProjectContext();
-  const { projects } = useProjects();
+  const { projects, createProject } = useProjects();
   const { plugins } = usePlugins();
   const [collapsed, setCollapsed] = useState(false);
   const [projectsExpanded, setProjectsExpanded] = useState(true);
@@ -157,7 +157,14 @@ export function Sidebar() {
                 </button>
               ))}
             <button
-              onClick={() => console.log("New Project clicked")}
+              onClick={async () => {
+                const name = prompt("Project name:");
+                if (!name?.trim()) return;
+                const colors = ["#c9a96e", "#8b5cf6", "#ec4899", "#10b981", "#f59e0b", "#3b82f6"];
+                const color = colors[projects.length % colors.length];
+                const p = await createProject({ name: name.trim(), color, done: 0, total: 0 } as import("@/lib/types").Project);
+                if (p) { setActiveProjectId(p.id); router.push("/dashboard"); }
+              }}
               className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md mt-1 text-text-muted"
             >
               <Plus size={14} /> New Project

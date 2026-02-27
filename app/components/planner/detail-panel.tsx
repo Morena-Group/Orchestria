@@ -145,7 +145,10 @@ export function DetailPanel({
               </span>
             ))}
             <button
-              onClick={() => console.log("Add tag to node:", node.id)}
+              onClick={() => {
+                const tag = prompt("Tag name:");
+                if (tag?.trim()) onSave(node.id, { tags: [...(node.tags ?? []), tag.trim()] });
+              }}
               className="px-1.5 py-0.5 rounded text-[10px] border border-dashed"
               style={{
                 borderColor: "var(--color-border-default)",

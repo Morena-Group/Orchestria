@@ -21,10 +21,22 @@ export default function TasksPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const { activeProjectId } = useProjectContext();
-  const { tasks } = useTasks(activeProjectId);
+  const { tasks, updateStatus, deleteTask } = useTasks(activeProjectId);
 
-  function handleAction(taskId: string, actionId: string, comment?: string) {
-    console.log("Task action:", { taskId, actionId, comment });
+  function handleAction(taskId: string, actionId: string) {
+    const statusMap: Record<string, TaskStatus> = {
+      approve: "completed",
+      complete: "completed",
+      start: "running",
+      pause: "pending",
+      review: "review",
+      block: "awaiting_input",
+    };
+    if (actionId === "delete") {
+      deleteTask(taskId);
+    } else if (statusMap[actionId]) {
+      updateStatus(taskId, statusMap[actionId]);
+    }
   }
 
   const sortedTasks = [...tasks].sort((a, b) => {

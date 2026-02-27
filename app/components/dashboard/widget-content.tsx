@@ -5,7 +5,7 @@ import {
   CheckCircle2, Plus, Edit3, AlertTriangle,
 } from "lucide-react";
 import { ST } from "@/lib/constants/status";
-import { useTasks, useWorkers, useProjects } from "@/lib/hooks";
+import { useTasks, useWorkers, useProjects, useNotes } from "@/lib/hooks";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusDot } from "@/components/ui/status-dot";
 import { Badge } from "@/components/ui/badge";
@@ -247,12 +247,24 @@ export function WidgetContent({ id }: WidgetContentProps) {
 }
 
 function QuickTaskWidget() {
+  const { createTask } = useTasks();
+  const { projects } = useProjects();
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState("medium");
 
-  function handleAdd() {
+  async function handleAdd() {
     if (!title.trim()) return;
-    console.log("Quick task added:", { title: title.trim(), priority });
+    await createTask({
+      title: title.trim(),
+      s: "pending",
+      p: priority as import("@/lib/types").Priority,
+      pr: projects[0]?.id || "",
+      w: null,
+      tags: [],
+      lock: false,
+      sub: 0,
+      subD: 0,
+    });
     setTitle("");
     setPriority("medium");
   }
@@ -279,11 +291,13 @@ function QuickTaskWidget() {
 }
 
 function QuickNoteWidget() {
+  const { createNote } = useNotes();
+  const { projects } = useProjects();
   const [text, setText] = useState("");
 
-  function handleSave() {
+  async function handleSave() {
     if (!text.trim()) return;
-    console.log("Quick note saved:", text.trim());
+    await createNote(text.trim(), projects[0]?.id || "");
     setText("");
   }
 

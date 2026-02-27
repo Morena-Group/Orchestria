@@ -62,13 +62,30 @@ export function NewTaskModal({ open, onClose }: NewTaskModalProps) {
     );
   }
 
-  function handleSubmit() {
-    const data = {
-      title, description, project, priority, worker, reviewBy,
-      tags: tagsInput.split(",").map((t) => t.trim()).filter(Boolean),
-      dependencies, subtasks, scheduling, startDate, repeat, lockTask,
-    };
-    console.log("New task:", data);
+  const { createTask } = useTasks();
+
+  async function handleSubmit() {
+    if (!title.trim()) return;
+    const tags = tagsInput.split(",").map((t) => t.trim()).filter(Boolean);
+    await createTask({
+      title: title.trim(),
+      s: "pending",
+      p: priority,
+      pr: project || projects[0]?.id || "",
+      w: worker === "auto" ? null : worker,
+      tags,
+      lock: lockTask,
+      sub: subtasks.length,
+      subD: 0,
+    });
+    // Reset form
+    setTitle("");
+    setDescription("");
+    setPriority("medium");
+    setWorker("auto");
+    setTagsInput("");
+    setSubtasks([]);
+    setLockTask(false);
     onClose();
   }
 

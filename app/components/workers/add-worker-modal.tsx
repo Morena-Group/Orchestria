@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Bot, User, Smartphone, Mail, Globe } from "lucide-react";
 import { HUMAN_SKILLS } from "@/lib/data/workers";
+import { useWorkers } from "@/lib/hooks";
 import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -34,11 +35,30 @@ export function AddWorkerModal({ open, onClose }: AddWorkerModalProps) {
     );
   }
 
-  function handleSubmit() {
-    const data = isHuman
-      ? { isHuman, name, email, contactMethod, description: humanDescription, skills, autoEscalate }
-      : { isHuman, name, type: aiType, role, model, thinkLevel };
-    console.log("New worker:", data);
+  const { addWorker } = useWorkers();
+
+  async function handleSubmit() {
+    if (!name.trim()) return;
+    await addWorker({
+      name: name.trim(),
+      type: isHuman ? "human" : aiType as import("@/lib/types").WorkerType,
+      role: role as import("@/lib/types").WorkerRole,
+      status: "offline",
+      active: 0,
+      done: 0,
+      model: isHuman ? null : (model || null),
+      think: isHuman ? null : thinkLevel,
+      isHuman,
+      skills: isHuman ? skills : undefined,
+      email: isHuman ? email : undefined,
+      contact: isHuman ? contactMethod : undefined,
+    });
+    // Reset form
+    setName("");
+    setEmail("");
+    setIsHuman(false);
+    setModel("");
+    setSkills([]);
     onClose();
   }
 

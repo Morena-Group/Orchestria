@@ -4,18 +4,18 @@ import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
-const FILES = [
+const DEFAULT_FILES = [
   {
     id: "memory",
     name: "memory.md",
     desc: "Persistent memory for the orchestrator. Loaded on every run.",
-    content: `# Orchestria Memory\n\n## Project: AI SaaS Platform\n- Stack: Next.js + Supabase + Stripe\n- Auth: Supabase Auth with RLS\n- Deploy target: Cloudflare Pages\n\n## Decisions\n- Use server components by default\n- API routes for Stripe webhooks\n- Tailwind CSS for styling`,
+    content: "# Orchestria Memory\n\n<!-- Add project context, decisions, and learnings here -->\n",
   },
   {
     id: "prompt",
     name: "global-prompt.md",
     desc: "System prompt prepended to every orchestrator and worker invocation.",
-    content: `You are an AI worker in the Orchestria system.\n\nRules:\n1. Follow the task description exactly\n2. Ask for clarification if the task is ambiguous\n3. Write clean, typed code with no TODOs\n4. Run tests before marking complete\n5. Update memory.md if you learn something new`,
+    content: "You are an AI worker in the Orchestria system.\n\nRules:\n1. Follow the task description exactly\n2. Ask for clarification if the task is ambiguous\n3. Write clean, typed code with no TODOs\n4. Run tests before marking complete\n5. Update memory.md if you learn something new",
   },
 ];
 
@@ -31,7 +31,7 @@ export function SystemFilesTab() {
         Editable config files that shape how the orchestrator and workers behave.
       </p>
 
-      {FILES.map((f) => (
+      {DEFAULT_FILES.map((f) => (
         <div key={f.id} className="space-y-2">
           <div className="flex items-center justify-between">
             <div>

@@ -45,7 +45,7 @@ export function FilesTab() {
           {/* Quota */}
           <div className="flex items-center gap-2 mr-4">
             <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
-              2.6 MB / 1 GB
+              {files.length === 0 ? "0 B" : `${files.length} file${files.length !== 1 ? "s" : ""}`} / 1 GB
             </span>
             <div
               className="w-20 h-1.5 rounded-full overflow-hidden"
@@ -53,7 +53,7 @@ export function FilesTab() {
             >
               <div
                 className="h-full rounded-full"
-                style={{ width: "0.26%", backgroundColor: "var(--color-accent)" }}
+                style={{ width: "0%", backgroundColor: "var(--color-accent)" }}
               />
             </div>
           </div>

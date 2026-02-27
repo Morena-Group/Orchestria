@@ -22,7 +22,7 @@ export function KnowledgeTab() {
   const { knowledge, memoryFacts } = useStorage();
   const [kiSearch, setKiSearch] = useState("");
   const [mfSearch, setMfSearch] = useState("");
-  const [pinnedDocs, setPinnedDocs] = useState(["ki1", "ki2"]);
+  const [pinnedDocs, setPinnedDocs] = useState<string[]>([]);
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
 
   const filteredKI = knowledge.filter((ki) => {

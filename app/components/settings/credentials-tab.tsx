@@ -1,27 +1,13 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Shield } from "lucide-react";
 
 const TIERS = [
   { t: "Open", c: "var(--color-text-primary)", d: "Worker reads directly. For non-sensitive config.", i: "\uD83D\uDFE2" },
   { t: "Gated", c: "var(--color-accent)", d: "Requires your approval per use. Default.", i: "\uD83D\uDFE1" },
   { t: "Ephemeral", c: "var(--color-error)", d: "Subagent uses it and discards. Never enters context.", i: "\uD83D\uDD34" },
 ];
-
-const CREDENTIALS = [
-  { n: "Stripe API Key", tier: "Gated", scope: "AI SaaS Platform" },
-  { n: "AWS Access Key", tier: "Ephemeral", scope: "Global" },
-  { n: "Test DB Password", tier: "Open", scope: "Data Pipeline v2" },
-  { n: "GitHub Token", tier: "Gated", scope: "Global" },
-];
-
-function tierColor(tier: string) {
-  if (tier === "Open") return "var(--color-text-primary)";
-  if (tier === "Gated") return "var(--color-accent)";
-  return "var(--color-error)";
-}
 
 export function CredentialsTab() {
   return (
@@ -46,27 +32,13 @@ export function CredentialsTab() {
         ))}
       </div>
 
-      {/* Credentials list */}
-      {CREDENTIALS.map((cr) => (
-        <div key={cr.n} className="p-4 rounded-xl border" style={{ borderColor: "var(--color-border-default)", backgroundColor: "var(--color-bg-card)" }}>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>{cr.n}</span>
-            <div className="flex items-center gap-2">
-              <Badge color={tierColor(cr.tier)}>{cr.tier}</Badge>
-              <Badge color="#71717a" bg="var(--color-bg-elevated)">{cr.scope}</Badge>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <input
-              type="password"
-              value={"\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"}
-              readOnly
-              className="glass-input flex-1 px-3 py-1.5 rounded-lg text-sm outline-none"
-            />
-            <Button>Edit</Button>
-          </div>
-        </div>
-      ))}
+      {/* Empty state */}
+      <div className="py-8 text-center rounded-xl border" style={{ borderColor: "var(--color-border-default)" }}>
+        <Shield size={24} className="mx-auto mb-2" style={{ color: "var(--color-text-muted)" }} />
+        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+          No credentials stored yet. Add API keys and secrets your workers need.
+        </p>
+      </div>
 
       <button
         className="w-full p-3 rounded-xl border border-dashed flex items-center justify-center gap-2 transition-colors hover:border-accent"

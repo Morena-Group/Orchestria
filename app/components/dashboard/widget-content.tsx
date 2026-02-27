@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import {
-  CheckCircle2, Plus, Edit3, AlertTriangle,
+  CheckCircle2, Plus, Edit3, AlertTriangle, Clock,
 } from "lucide-react";
 import { ST } from "@/lib/constants/status";
-import { useTasks, useWorkers, useProjects, useNotes } from "@/lib/hooks";
+import { useTasks, useWorkers, useProjects, useNotes, useChats } from "@/lib/hooks";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusDot } from "@/components/ui/status-dot";
 import { Badge } from "@/components/ui/badge";
@@ -44,17 +44,14 @@ export function WidgetContent({ id }: WidgetContentProps) {
   }
 
   if (id === "worker-hours") {
-    const hrs = [
-      { pct: 72, h: "4.3" },
-      { pct: 35, h: "2.1" },
-      { pct: 12, h: "0.7" },
-      { pct: 58, h: "3.5" },
-      { pct: 28, h: "1.7" },
-    ];
+    if (WORKERS.length === 0) {
+      return <EmptyWidget text="No workers configured yet." />;
+    }
     return (
       <div className="space-y-2">
-        {WORKERS.map((w, i) => {
-          const d = hrs[i] || { pct: 40, h: "2.4" };
+        {WORKERS.map((w) => {
+          const total = w.done + w.active;
+          const pct = total > 0 ? Math.round((w.done / total) * 100) : 0;
           return (
             <div key={w.id} className="flex items-center gap-2">
               <Avatar type={w.type} size={20} role={w.role} />
@@ -62,10 +59,10 @@ export function WidgetContent({ id }: WidgetContentProps) {
               <div className="flex-1 h-3 rounded-full overflow-hidden bg-bg-deep">
                 <div
                   className="h-full rounded-full bg-bg-elevated"
-                  style={{ width: `${d.pct}%` }}
+                  style={{ width: `${pct}%` }}
                 />
               </div>
-              <span className="text-xs w-10 text-right text-text-secondary">{d.h}h</span>
+              <span className="text-xs w-10 text-right text-text-secondary">{total} tasks</span>
             </div>
           );
         })}
@@ -74,45 +71,29 @@ export function WidgetContent({ id }: WidgetContentProps) {
   }
 
   if (id === "token-usage") {
-    const usage = [
-      { n: "Claude", v: "1.2M", c: "$18.00" },
-      { n: "Gemini", v: "800K", c: "$4.00" },
-      { n: "GPT-4o", v: "200K", c: "$2.00" },
-    ];
-    return (
-      <div className="space-y-2">
-        {usage.map((u) => (
-          <div key={u.n} className="flex items-center justify-between p-2 rounded bg-bg-deep">
-            <span className="text-xs text-text-secondary">{u.n}</span>
-            <span className="text-xs font-medium text-text-primary">{u.v} tokens</span>
-            <span className="text-xs font-bold text-text-primary">{u.c}</span>
-          </div>
-        ))}
-        <div className="flex justify-between pt-2 border-t border-border-default">
-          <span className="text-xs text-text-secondary">Total today</span>
-          <span className="text-sm font-bold text-text-primary">$24.00</span>
-        </div>
-      </div>
-    );
+    return <EmptyWidget text="Token tracking starts when AI workers process tasks." />;
   }
 
   if (id === "cost-tracker") {
     return (
       <div>
-        <div className="text-3xl font-bold mb-1 text-text-primary">$24.00</div>
-        <span className="text-xs text-text-muted">Today&apos;s spend &bull; Budget: $50/day</span>
+        <div className="text-3xl font-bold mb-1 text-text-primary">$0.00</div>
+        <span className="text-xs text-text-muted">Today&apos;s spend &bull; No budget set</span>
         <div className="h-2 rounded-full mt-2 overflow-hidden bg-bg-deep">
-          <div className="h-full rounded-full bg-accent" style={{ width: "48%" }} />
+          <div className="h-full rounded-full bg-accent" style={{ width: "0%" }} />
         </div>
       </div>
     );
   }
 
   if (id === "project-health") {
+    if (PROJECTS.length === 0) {
+      return <EmptyWidget text="No projects yet." />;
+    }
     return (
       <div className="space-y-2">
         {PROJECTS.map((p) => {
-          const pct = Math.round((p.done / p.total) * 100);
+          const pct = p.total > 0 ? Math.round((p.done / p.total) * 100) : 0;
           return (
             <div key={p.id} className="flex items-center gap-3">
               <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: p.color }} />
@@ -132,9 +113,13 @@ export function WidgetContent({ id }: WidgetContentProps) {
   }
 
   if (id === "worker-activity") {
+    const activeWorkers = WORKERS.filter((w) => w.active > 0);
+    if (activeWorkers.length === 0) {
+      return <EmptyWidget text="No workers currently active." />;
+    }
     return (
       <div className="space-y-2">
-        {WORKERS.filter((w) => w.active > 0).map((w) => (
+        {activeWorkers.map((w) => (
           <div key={w.id} className="flex items-center gap-2 p-2 rounded bg-bg-deep">
             <Avatar type={w.type} size={24} role={w.role} />
             <div className="flex-1 min-w-0">
@@ -151,9 +136,13 @@ export function WidgetContent({ id }: WidgetContentProps) {
   }
 
   if (id === "needs-attention") {
+    const attention = TASKS.filter((t) => t.s === "awaiting_input" || t.s === "review");
+    if (attention.length === 0) {
+      return <EmptyWidget text="All clear — no tasks need attention." />;
+    }
     return (
       <div className="space-y-2">
-        {TASKS.filter((t) => t.s === "awaiting_input" || t.s === "review").map((t) => {
+        {attention.map((t) => {
           const sc = ST[t.s];
           return (
             <div key={t.id} className="p-2 rounded flex items-center gap-2 bg-bg-deep">
@@ -168,23 +157,7 @@ export function WidgetContent({ id }: WidgetContentProps) {
   }
 
   if (id === "recent-activity") {
-    const events = [
-      { t: "2m", e: "Claude completed 'DB schema'", c: "#c9a96e" },
-      { t: "15m", e: "Kimi started 'Security audit'", c: "#c9a96e" },
-      { t: "1h", e: "ChatGPT blocked on 'API docs'", c: "#c9a96e" },
-      { t: "2h", e: "Gemini completed 'Market research'", c: "#c9a96e" },
-    ];
-    return (
-      <div className="space-y-1">
-        {events.map((a, i) => (
-          <div key={i} className="flex items-center gap-2 p-1">
-            <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: a.c }} />
-            <span className="text-xs flex-1 text-text-primary">{a.e}</span>
-            <span className="text-[10px] text-text-muted">{a.t}</span>
-          </div>
-        ))}
-      </div>
-    );
+    return <EmptyWidget text="Activity log will appear as workers process tasks." />;
   }
 
   if (id === "quick-task") {
@@ -196,17 +169,7 @@ export function WidgetContent({ id }: WidgetContentProps) {
   }
 
   if (id === "chat-preview") {
-    return (
-      <div className="p-2 rounded bg-bg-deep">
-        <div className="flex items-center gap-2 mb-1">
-          <Avatar type="claude-cli" size={18} role="orchestrator" />
-          <span className="text-[10px] text-text-muted">10:25 AM</span>
-        </div>
-        <p className="text-xs line-clamp-3 text-text-secondary">
-          Done! Created 6 subtasks under &apos;Auth Module&apos;. All in Draft.
-        </p>
-      </div>
-    );
+    return <ChatPreviewWidget />;
   }
 
   if (id === "custom-code") {
@@ -222,11 +185,14 @@ export function WidgetContent({ id }: WidgetContentProps) {
     );
   }
 
-  // Fallback for widgets without specific content yet
   if (id === "success-rate") {
+    const withDone = WORKERS.filter((w) => w.done > 0);
+    if (withDone.length === 0) {
+      return <EmptyWidget text="No completed tasks yet." />;
+    }
     return (
       <div className="space-y-2">
-        {WORKERS.filter((w) => w.done > 0).map((w) => {
+        {withDone.map((w) => {
           const rate = Math.round((w.done / (w.done + w.active)) * 100);
           return (
             <div key={w.id} className="flex items-center gap-2">
@@ -244,6 +210,32 @@ export function WidgetContent({ id }: WidgetContentProps) {
   }
 
   return <span className="text-xs text-text-muted">Widget content</span>;
+}
+
+function EmptyWidget({ text }: { text: string }) {
+  return (
+    <div className="py-4 text-center">
+      <p className="text-xs text-text-muted">{text}</p>
+    </div>
+  );
+}
+
+function ChatPreviewWidget() {
+  const { messages } = useChats();
+  const last = messages[messages.length - 1];
+  if (!last) {
+    return <EmptyWidget text="No chat messages yet." />;
+  }
+  return (
+    <div className="p-2 rounded bg-bg-deep">
+      <div className="flex items-center gap-2 mb-1">
+        <span className="text-[10px] text-text-muted">{last.time}</span>
+      </div>
+      <p className="text-xs line-clamp-3 text-text-secondary">
+        {last.content}
+      </p>
+    </div>
+  );
 }
 
 function QuickTaskWidget() {

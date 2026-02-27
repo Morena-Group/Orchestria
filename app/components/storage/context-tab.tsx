@@ -19,7 +19,7 @@ export function ContextTab() {
   const { projects } = useProjects();
   const [contextMode, setContextMode] = useState<"full" | "recency" | "custom">("recency");
   const [tokenBudget, setTokenBudget] = useState(8000);
-  const [pinnedDocs, setPinnedDocs] = useState(["ki1", "ki2"]);
+  const [pinnedDocs, setPinnedDocs] = useState<string[]>([]);
   const [excludedProjects, setExcludedProjects] = useState<string[]>([]);
   const [showCustomize, setShowCustomize] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -210,7 +210,10 @@ export function ContextTab() {
             </p>
             <div className="space-y-1.5">
               {knowledge
-                .filter((ki) => !excludedProjects.includes(ki.proj === "AI SaaS Platform" ? "p1" : ki.proj === "Marketing Automation" ? "p2" : ""))
+                .filter((ki) => {
+                  const proj = projects.find((p) => p.name === ki.proj);
+                  return !proj || !excludedProjects.includes(proj.id);
+                })
                 .sort((a, b) => (pinnedDocs.includes(b.id) ? 1 : 0) - (pinnedDocs.includes(a.id) ? 1 : 0))
                 .map((ki) => {
                   const isPinned = pinnedDocs.includes(ki.id);

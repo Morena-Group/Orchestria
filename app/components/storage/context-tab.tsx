@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useStorage, useProjects } from "@/lib/hooks";
+import { useState, useEffect } from "react";
+import { useStorage, useProjects, useSettings } from "@/lib/hooks";
 import { Label } from "@/components/ui/label";
 import {
   Globe, Clock, Settings, Check, Pin, X, CheckCircle2, Sparkles,
@@ -17,6 +17,7 @@ const MODES = [
 export function ContextTab() {
   const { knowledge, compactionLog } = useStorage();
   const { projects } = useProjects();
+  const { settings, loading: settingsLoading, update: updateSettings } = useSettings();
   const [contextMode, setContextMode] = useState<"full" | "recency" | "custom">("recency");
   const [tokenBudget, setTokenBudget] = useState(8000);
   const [pinnedDocs, setPinnedDocs] = useState<string[]>([]);
@@ -24,6 +25,31 @@ export function ContextTab() {
   const [showCustomize, setShowCustomize] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showCompaction, setShowCompaction] = useState(false);
+  const [simWeight, setSimWeight] = useState(70);
+  const [recWeight, setRecWeight] = useState(30);
+  const [simThreshold, setSimThreshold] = useState(60);
+
+  // Initialize from saved settings
+  useEffect(() => {
+    if (!settingsLoading && settings.context) {
+      if (settings.context.mode) setContextMode(settings.context.mode);
+      if (settings.context.tokenBudget) setTokenBudget(settings.context.tokenBudget);
+      if (settings.context.simWeight !== undefined) setSimWeight(settings.context.simWeight);
+      if (settings.context.recWeight !== undefined) setRecWeight(settings.context.recWeight);
+      if (settings.context.simThreshold !== undefined) setSimThreshold(settings.context.simThreshold);
+    }
+  }, [settingsLoading, settings.context]);
+
+  function persistContext(overrides?: Record<string, unknown>) {
+    updateSettings("context", {
+      mode: contextMode,
+      tokenBudget,
+      simWeight,
+      recWeight,
+      simThreshold,
+      ...overrides,
+    });
+  }
 
   const totalIndexTokens = knowledge.reduce((s, ki) => s + ki.tokens, 0);
   const pinnedTokens = knowledge.filter((ki) => pinnedDocs.includes(ki.id)).reduce((s, ki) => s + ki.tokens, 0);
@@ -43,7 +69,7 @@ export function ContextTab() {
             return (
               <div
                 key={m.id}
-                onClick={() => setContextMode(m.id)}
+                onClick={() => { setContextMode(m.id); persistContext({ mode: m.id }); }}
                 className="p-4 rounded-xl border cursor-pointer transition-colors"
                 style={{
                   borderColor: active ? "var(--color-accent)" : "var(--color-border-default)",
@@ -86,7 +112,7 @@ export function ContextTab() {
             </span>
             <select
               value={tokenBudget}
-              onChange={(e) => setTokenBudget(Number(e.target.value))}
+              onChange={(e) => { const v = Number(e.target.value); setTokenBudget(v); persistContext({ tokenBudget: v }); }}
               className="glass-input px-2 py-1 rounded text-xs outline-none"
             >
               <option value={4000}>4K (minimal)</option>
@@ -133,18 +159,18 @@ export function ContextTab() {
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
                   <Label>Similarity Weight</Label>
-                  <input type="range" min="0" max="100" defaultValue="70" className="flex-1 accent-[#c9a96e]" />
-                  <span className="text-xs w-8" style={{ color: "var(--color-text-secondary)" }}>0.7</span>
+                  <input type="range" min="0" max="100" value={simWeight} onChange={(e) => setSimWeight(Number(e.target.value))} onPointerUp={() => persistContext({ simWeight })} className="flex-1 accent-[#c9a96e]" />
+                  <span className="text-xs w-8" style={{ color: "var(--color-text-secondary)" }}>{(simWeight / 100).toFixed(1)}</span>
                 </div>
                 <div className="flex items-center gap-4">
                   <Label>Recency Weight</Label>
-                  <input type="range" min="0" max="100" defaultValue="30" className="flex-1 accent-[#c9a96e]" />
-                  <span className="text-xs w-8" style={{ color: "var(--color-text-secondary)" }}>0.3</span>
+                  <input type="range" min="0" max="100" value={recWeight} onChange={(e) => setRecWeight(Number(e.target.value))} onPointerUp={() => persistContext({ recWeight })} className="flex-1 accent-[#c9a96e]" />
+                  <span className="text-xs w-8" style={{ color: "var(--color-text-secondary)" }}>{(recWeight / 100).toFixed(1)}</span>
                 </div>
                 <div className="flex items-center gap-4">
                   <Label>Similarity Threshold</Label>
-                  <input type="range" min="0" max="100" defaultValue="60" className="flex-1 accent-[#c9a96e]" />
-                  <span className="text-xs w-8" style={{ color: "var(--color-text-secondary)" }}>0.6</span>
+                  <input type="range" min="0" max="100" value={simThreshold} onChange={(e) => setSimThreshold(Number(e.target.value))} onPointerUp={() => persistContext({ simThreshold })} className="flex-1 accent-[#c9a96e]" />
+                  <span className="text-xs w-8" style={{ color: "var(--color-text-secondary)" }}>{(simThreshold / 100).toFixed(1)}</span>
                 </div>
                 <div>
                   <Label>Pinned Documents ({pinnedDocs.length})</Label>

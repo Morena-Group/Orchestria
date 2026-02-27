@@ -1,14 +1,30 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { useWorkers } from "@/lib/hooks";
+import { useWorkers, useSettings } from "@/lib/hooks";
 import { WT } from "@/lib/constants/status";
 import { FileText } from "lucide-react";
 
+const DEFAULT_PROMPT = "You are an AI worker in the Orchestria system. Follow task instructions precisely. Ask for clarification if ambiguous. Write clean, typed code. Run tests before marking complete.";
+
 export function AgentDefaultsTab() {
   const { workers } = useWorkers();
+  const { settings, loading, update } = useSettings();
+  const [systemPrompt, setSystemPrompt] = useState(DEFAULT_PROMPT);
+  const [routing, setRouting] = useState("auto");
+  const [reviewMode, setReviewMode] = useState("always");
+
+  // Initialize from saved settings
+  useEffect(() => {
+    if (!loading && settings.agentDefaults) {
+      if (settings.agentDefaults.systemPrompt) setSystemPrompt(settings.agentDefaults.systemPrompt);
+      if (settings.agentDefaults.routing) setRouting(settings.agentDefaults.routing);
+      if (settings.agentDefaults.reviewMode) setReviewMode(settings.agentDefaults.reviewMode);
+    }
+  }, [loading, settings.agentDefaults]);
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -23,7 +39,8 @@ export function AgentDefaultsTab() {
       <div>
         <Label>Default System Prompt</Label>
         <textarea
-          defaultValue="You are an AI worker in the Orchestria system. Follow task instructions precisely. Ask for clarification if ambiguous. Write clean, typed code. Run tests before marking complete."
+          value={systemPrompt}
+          onChange={(e) => setSystemPrompt(e.target.value)}
           rows={4}
           className="w-full glass-input px-4 py-3 rounded-xl text-xs font-mono outline-none resize-y leading-relaxed mt-1"
           style={{ color: "var(--color-text-primary)" }}
@@ -33,21 +50,21 @@ export function AgentDefaultsTab() {
       {/* Routing Strategy */}
       <div>
         <Label>Task Routing Strategy</Label>
-        <Select>
-          <option>Auto (Orchestrator decides)</option>
-          <option>Round Robin</option>
-          <option>Skill-Based</option>
-          <option>Cost-Optimized</option>
+        <Select value={routing} onChange={(e) => setRouting(e.target.value)}>
+          <option value="auto">Auto (Orchestrator decides)</option>
+          <option value="round_robin">Round Robin</option>
+          <option value="skill_based">Skill-Based</option>
+          <option value="cost_optimized">Cost-Optimized</option>
         </Select>
       </div>
 
       {/* Review Mode */}
       <div>
         <Label>Review Mode</Label>
-        <Select>
-          <option>Always Review (every task goes to review)</option>
-          <option>Auto-Approve Low Risk</option>
-          <option>Never Review (auto-approve all)</option>
+        <Select value={reviewMode} onChange={(e) => setReviewMode(e.target.value)}>
+          <option value="always">Always Review (every task goes to review)</option>
+          <option value="auto_low_risk">Auto-Approve Low Risk</option>
+          <option value="never">Never Review (auto-approve all)</option>
         </Select>
       </div>
 
@@ -89,7 +106,9 @@ export function AgentDefaultsTab() {
         </div>
       </div>
 
-      <Button primary>Save Defaults</Button>
+      <Button primary onClick={() => update("agentDefaults", { systemPrompt, routing, reviewMode })}>
+        Save Defaults
+      </Button>
     </div>
   );
 }

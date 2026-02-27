@@ -9,7 +9,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { getActionIcon } from "@/lib/constants/icons";
 import { TASK_ACTIONS } from "./task-actions-config";
-import type { Task } from "@/lib/types";
+import type { Task, TaskStatus, Priority } from "@/lib/types";
 import { ST, PRI } from "@/lib/constants/status";
 import { useWorkers, useProjects, useTaskDetail, useTasks } from "@/lib/hooks";
 import { Badge } from "@/components/ui/badge";
@@ -33,13 +33,24 @@ interface TaskModalProps {
 export function TaskModal({ task, onClose }: TaskModalProps) {
   const { workers } = useWorkers();
   const { projects } = useProjects();
-  const { updateStatus, deleteTask } = useTasks();
-  const { detail, toggleSubtask, addComment } = useTaskDetail(task.id);
+  const { updateTask, updateStatus, deleteTask } = useTasks();
+  const { detail, toggleSubtask, addComment, updateDescription } = useTaskDetail(task.id);
   const worker = workers.find((w) => w.id === task.w);
   const sc = ST[task.s];
   const [tab, setTab] = useState("overview");
   const [commentInput, setCommentInput] = useState("");
+  const [resumeInput, setResumeInput] = useState("");
+  const [editTitle, setEditTitle] = useState(task.title);
+  const [editTags, setEditTags] = useState(task.tags.join(", "));
+  const [editDesc, setEditDesc] = useState("");
+  const [descInit, setDescInit] = useState(false);
   const desc = detail?.description || "No description provided.";
+
+  // Sync description from detail once loaded
+  if (detail && !descInit) {
+    setEditDesc(detail.description);
+    setDescInit(true);
+  }
   const subtasks = detail?.subtasks ?? [];
   const comments = detail?.comments ?? [];
   const timeline = detail?.timeline ?? [];
@@ -104,10 +115,27 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               <input
+                value={resumeInput}
+                onChange={(e) => setResumeInput(e.target.value)}
                 placeholder="Provide input..."
                 className="px-3 py-1.5 rounded-lg text-xs outline-none w-48 glass-input text-text-primary placeholder:text-text-muted"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && resumeInput.trim()) {
+                    addComment(resumeInput.trim(), "You", true);
+                    updateTask(task.id, { block: undefined });
+                    setResumeInput("");
+                  }
+                }}
               />
-              <button className="px-3 py-1.5 rounded-lg text-xs flex items-center gap-1 bg-accent text-accent-fg">
+              <button
+                className="px-3 py-1.5 rounded-lg text-xs flex items-center gap-1 bg-accent text-accent-fg"
+                onClick={() => {
+                  if (!resumeInput.trim()) return;
+                  addComment(resumeInput.trim(), "You", true);
+                  updateTask(task.id, { block: undefined });
+                  setResumeInput("");
+                }}
+              >
                 <Send size={12} /> Resume
               </button>
             </div>
@@ -224,8 +252,21 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
                       onChange={(e) => setCommentInput(e.target.value)}
                       placeholder="Add a comment..."
                       className="flex-1 px-3 py-2 rounded-lg text-xs outline-none glass-input text-text-primary placeholder:text-text-muted"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && commentInput.trim()) {
+                          addComment(commentInput.trim(), "You", true);
+                          setCommentInput("");
+                        }
+                      }}
                     />
-                    <button className="px-3 py-2 rounded-lg text-xs bg-accent text-accent-fg">
+                    <button
+                      className="px-3 py-2 rounded-lg text-xs bg-accent text-accent-fg"
+                      onClick={() => {
+                        if (!commentInput.trim()) return;
+                        addComment(commentInput.trim(), "You", true);
+                        setCommentInput("");
+                      }}
+                    >
                       <Send size={12} />
                     </button>
                   </div>
@@ -236,7 +277,7 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
               <div className="w-56 p-4 flex-shrink-0 space-y-3">
                 <div>
                   <Label>Status</Label>
-                  <Select defaultValue={task.s}>
+                  <Select value={task.s} onChange={(e) => updateTask(task.id, { s: e.target.value as TaskStatus })}>
                     {Object.entries(ST).map(([k, v]) => (
                       <option key={k} value={k}>{v.l}</option>
                     ))}
@@ -244,7 +285,7 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
                 </div>
                 <div>
                   <Label>Priority</Label>
-                  <Select defaultValue={task.p}>
+                  <Select value={task.p} onChange={(e) => updateTask(task.id, { p: e.target.value as Priority })}>
                     <option value="urgent">Urgent</option>
                     <option value="high">High</option>
                     <option value="medium">Medium</option>
@@ -253,7 +294,7 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
                 </div>
                 <div>
                   <Label>Worker</Label>
-                  <Select defaultValue={task.w || "auto"}>
+                  <Select value={task.w || "auto"} onChange={(e) => updateTask(task.id, { w: e.target.value === "auto" ? null : e.target.value })}>
                     <option value="auto">Auto</option>
                     {workers.map((wr) => (
                       <option key={wr.id} value={wr.id}>{wr.name}</option>
@@ -262,7 +303,7 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
                 </div>
                 <div>
                   <Label>Review By</Label>
-                  <Select>
+                  <Select defaultValue="Orchestrator decides">
                     <option>Orchestrator decides</option>
                     <option>Orchestrator review</option>
                     <option>Human Review</option>
@@ -273,7 +314,7 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
                 </div>
                 <div>
                   <Label>Project</Label>
-                  <Select defaultValue={task.pr}>
+                  <Select value={task.pr} onChange={(e) => updateTask(task.id, { pr: e.target.value })}>
                     {projects.map((p) => (
                       <option key={p.id} value={p.id}>{p.name}</option>
                     ))}
@@ -296,7 +337,7 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
                 </div>
                 <div className="border-t border-border-default pt-3">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" defaultChecked={task.lock} className="accent-[#c9a96e]" />
+                    <input type="checkbox" checked={task.lock} onChange={(e) => updateTask(task.id, { lock: e.target.checked })} className="accent-[#c9a96e]" />
                     <span className="text-xs text-text-primary">Lock task</span>
                     <Lock size={12} className="ml-auto text-accent" />
                   </label>
@@ -414,19 +455,36 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
             <div className="p-5 max-w-lg space-y-4">
               <div>
                 <Label>Task Title</Label>
-                <Input defaultValue={task.title} />
+                <Input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  onBlur={() => {
+                    if (editTitle.trim() && editTitle !== task.title) {
+                      updateTask(task.id, { title: editTitle.trim() });
+                    }
+                  }}
+                />
               </div>
               <div>
                 <Label>Description</Label>
                 <textarea
                   className="w-full px-3 py-2 rounded-lg text-sm outline-none resize-none glass-input text-text-primary"
                   rows={4}
-                  defaultValue={desc}
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  onBlur={() => updateDescription(editDesc)}
                 />
               </div>
               <div>
                 <Label>Tags</Label>
-                <Input defaultValue={task.tags.join(", ")} />
+                <Input
+                  value={editTags}
+                  onChange={(e) => setEditTags(e.target.value)}
+                  onBlur={() => {
+                    const tags = editTags.split(",").map((t) => t.trim()).filter(Boolean);
+                    updateTask(task.id, { tags });
+                  }}
+                />
               </div>
               <div>
                 <Label>Scheduling</Label>
@@ -449,7 +507,10 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
                 <h4 className="text-xs font-semibold mb-2 text-error">Danger Zone</h4>
                 <div className="flex gap-2">
                   <Button><Archive size={12} /> Archive</Button>
-                  <button className="px-4 py-2 rounded-lg text-sm flex items-center gap-2 border border-border-default text-error hover:bg-error-muted transition-colors">
+                  <button
+                    onClick={() => { deleteTask(task.id); onClose(); }}
+                    className="px-4 py-2 rounded-lg text-sm flex items-center gap-2 border border-border-default text-error hover:bg-error-muted transition-colors"
+                  >
                     <Trash2 size={14} /> Delete
                   </button>
                 </div>

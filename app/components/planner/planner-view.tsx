@@ -94,6 +94,27 @@ export function PlannerView() {
     }
   }, [addNode]);
 
+  const handleAddChild = useCallback(async (parentId: string) => {
+    const parent = nodes.find((n) => n.id === parentId);
+    if (!parent) return;
+    const newNode = await addNode({
+      level: parent.level + 1,
+      label: "New task",
+      status: "draft",
+      priority: "medium",
+      worker: null,
+      act: null,
+      review: "Orchestrator decides",
+      tags: [],
+      children: [],
+      description: "New task — click to edit",
+    }, parentId);
+    if (newNode) {
+      setSelected(newNode.id);
+      setExpanded((prev) => ({ ...prev, [parentId]: true }));
+    }
+  }, [nodes, addNode]);
+
   const handleChatSend = useCallback(() => {
     const text = chatInput.trim();
     if (!text) return;
@@ -217,6 +238,7 @@ export function PlannerView() {
               selectedNodes={selectedNodes}
               onToggleSelect={onToggleSelect}
               filterDimmed={filterDimmed}
+              onAddChild={handleAddChild}
             />
           ))}
           <div className="flex justify-center mt-6">

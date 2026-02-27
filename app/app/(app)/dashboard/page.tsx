@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard, Plus, Download, X, Clock,
   ListTodo, Timer, Cpu, DollarSign, TrendingUp, BarChart3,
@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { WIDGET_CATALOG } from "@/lib/data/widgets";
+import { useWidgets } from "@/lib/hooks";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { WidgetContent } from "@/components/dashboard/widget-content";
@@ -21,13 +22,29 @@ const ICON_MAP: Record<string, LucideIcon> = {
 };
 
 export default function DashboardPage() {
-  const [widgets, setWidgets] = useState(
-    WIDGET_CATALOG.filter((w) => w.default).map((w) => w.id)
-  );
+  const { widgets: savedWidgets, loading: widgetsLoading, saveLayout } = useWidgets();
+  const [widgets, setWidgets] = useState<string[]>([]);
   const [showCatalog, setShowCatalog] = useState(false);
 
-  const removeWidget = (id: string) => setWidgets((ws) => ws.filter((w) => w !== id));
-  const addWidget = (id: string) => setWidgets((ws) => [...ws, id]);
+  useEffect(() => {
+    if (!widgetsLoading) {
+      setWidgets(savedWidgets.length > 0
+        ? savedWidgets
+        : WIDGET_CATALOG.filter((w) => w.default).map((w) => w.id)
+      );
+    }
+  }, [savedWidgets, widgetsLoading]);
+
+  const removeWidget = (id: string) => {
+    const next = widgets.filter((w) => w !== id);
+    setWidgets(next);
+    saveLayout(next);
+  };
+  const addWidget = (id: string) => {
+    const next = [...widgets, id];
+    setWidgets(next);
+    saveLayout(next);
+  };
 
   return (
     <div className="flex-1 overflow-y-auto p-6">

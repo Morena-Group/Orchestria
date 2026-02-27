@@ -100,5 +100,14 @@ export function useTaskDetail(taskId: string | null) {
     }
   }, [supabase, taskId]);
 
-  return { detail, loading, error, refetch: fetch, toggleSubtask, addComment };
+  const updateDescription = useCallback(async (text: string) => {
+    if (!taskId) return;
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return;
+    setDetail((prev) => prev ? { ...prev, description: text } : null);
+    await supabase.from("task_details")
+      .upsert({ task_id: taskId, user_id: u.user.id, description: text }, { onConflict: "task_id" });
+  }, [supabase, taskId]);
+
+  return { detail, loading, error, refetch: fetch, toggleSubtask, addComment, updateDescription };
 }

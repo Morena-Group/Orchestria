@@ -11,3 +11,4 @@ export { useStorage } from "./use-storage";
 export { useWidgets } from "./use-widgets";
 export { useBriefings } from "./use-briefings";
 export { useRealtimeSubscription } from "./use-realtime";
+export { useSettings } from "./use-settings";

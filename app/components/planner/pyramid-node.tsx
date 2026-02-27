@@ -20,6 +20,7 @@ interface PyramidNodeProps {
   selectedNodes: string[];
   onToggleSelect: (id: string) => void;
   filterDimmed: ((node: PlanNode) => boolean) | null;
+  onAddChild?: (parentId: string) => void;
 }
 
 export function PyramidNode({
@@ -33,6 +34,7 @@ export function PyramidNode({
   selectedNodes,
   onToggleSelect,
   filterDimmed,
+  onAddChild,
 }: PyramidNodeProps) {
   const { workers } = useWorkers();
   const w = workers.find((x) => x.id === node.worker);
@@ -185,6 +187,10 @@ export function PyramidNode({
                 color: "var(--color-accent-fg)",
               }}
               title="Add child"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddChild?.(node.id);
+              }}
             >
               <Plus size={10} />
             </button>
@@ -192,6 +198,10 @@ export function PyramidNode({
               className="w-5 h-5 rounded-full flex items-center justify-center"
               style={{ backgroundColor: "#71717a", color: "#ffffff" }}
               title="Edit"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect(node.id);
+              }}
             >
               <Edit3 size={10} />
             </button>
@@ -223,6 +233,7 @@ export function PyramidNode({
               selectedNodes={selectedNodes}
               onToggleSelect={onToggleSelect}
               filterDimmed={filterDimmed}
+              onAddChild={onAddChild}
             />
           ) : (
             <div className="flex items-start gap-3">
@@ -241,6 +252,7 @@ export function PyramidNode({
                   selectedNodes={selectedNodes}
                   onToggleSelect={onToggleSelect}
                   filterDimmed={filterDimmed}
+                  onAddChild={onAddChild}
                 />
               ))}
             </div>

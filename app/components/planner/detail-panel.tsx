@@ -33,6 +33,7 @@ export function DetailPanel({
   const [activity, setActivity] = useState(node.act ?? "none");
   const [worker, setWorker] = useState(node.worker ?? "auto");
   const [review, setReview] = useState(node.review);
+  const [locked, setLocked] = useState(false);
 
   // Reset local state when node changes
   useEffect(() => {
@@ -41,6 +42,7 @@ export function DetailPanel({
     setActivity(node.act ?? "none");
     setWorker(node.worker ?? "auto");
     setReview(node.review);
+    setLocked(false);
   }, [node.id, node.status, node.priority, node.act, node.worker, node.review]);
   const children = allNodes.filter((n) => node.children.includes(n.id));
   const parents = allNodes.filter((n) => n.children.includes(node.id));
@@ -223,7 +225,7 @@ export function DetailPanel({
           className="flex items-center gap-3 p-3 rounded-lg cursor-pointer"
           style={{ backgroundColor: "var(--color-bg-card)" }}
         >
-          <input type="checkbox" className="accent-[#c9a96e]" />
+          <input type="checkbox" checked={locked} onChange={(e) => setLocked(e.target.checked)} className="accent-[#c9a96e]" />
           <div>
             <span
               className="text-xs"

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSettings } from "@/lib/hooks";
 
 const EVENTS = [
   { id: "task_done", l: "Task Completed", d: "When any worker finishes a task" },
@@ -11,15 +12,31 @@ const EVENTS = [
   { id: "token_limit", l: "Token Limit Alert", d: "When usage approaches configured limits" },
 ];
 
+const DEFAULTS: Record<string, boolean> = {
+  task_done: true,
+  review: true,
+  blocked: true,
+  plan_ready: false,
+  briefing: true,
+  token_limit: true,
+};
+
 export function NotificationsTab() {
-  const [enabled, setEnabled] = useState<Record<string, boolean>>({
-    task_done: true,
-    review: true,
-    blocked: true,
-    plan_ready: false,
-    briefing: true,
-    token_limit: true,
-  });
+  const { settings, loading, update } = useSettings();
+  const [enabled, setEnabled] = useState<Record<string, boolean>>(DEFAULTS);
+
+  // Initialize from saved settings
+  useEffect(() => {
+    if (!loading && settings.notifications) {
+      setEnabled((prev) => ({ ...prev, ...settings.notifications }));
+    }
+  }, [loading, settings.notifications]);
+
+  function toggle(id: string) {
+    const next = { ...enabled, [id]: !enabled[id] };
+    setEnabled(next);
+    update("notifications", next);
+  }
 
   return (
     <div className="max-w-xl space-y-4">
@@ -48,7 +65,7 @@ export function NotificationsTab() {
                 </span>
               </div>
               <button
-                onClick={() => setEnabled((p) => ({ ...p, [ev.id]: !on }))}
+                onClick={() => toggle(ev.id)}
                 className="relative w-10 h-5 rounded-full transition-colors"
                 style={{ backgroundColor: on ? "var(--color-accent)" : "var(--color-bg-elevated)" }}
               >

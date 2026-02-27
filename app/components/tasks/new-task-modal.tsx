@@ -5,6 +5,7 @@ import {
   Plus, Calendar, ChevronDown, ChevronRight, Lock, GripVertical, X,
 } from "lucide-react";
 import { useProjects, useWorkers, useTasks } from "@/lib/hooks";
+import { getClient } from "@/lib/supabase/client";
 import { ST } from "@/lib/constants/status";
 import type { Priority } from "@/lib/types";
 import { Modal } from "@/components/ui/modal";
@@ -67,7 +68,7 @@ export function NewTaskModal({ open, onClose }: NewTaskModalProps) {
   async function handleSubmit() {
     if (!title.trim()) return;
     const tags = tagsInput.split(",").map((t) => t.trim()).filter(Boolean);
-    await createTask({
+    const mapped = await createTask({
       title: title.trim(),
       s: "pending",
       p: priority,
@@ -78,6 +79,25 @@ export function NewTaskModal({ open, onClose }: NewTaskModalProps) {
       sub: subtasks.length,
       subD: 0,
     });
+    // Persist description and subtasks
+    if (mapped) {
+      const supabase = getClient();
+      const { data: u } = await supabase.auth.getUser();
+      if (u.user) {
+        const promises: Promise<unknown>[] = [];
+        if (description.trim()) {
+          promises.push(supabase.from("task_details")
+            .insert({ task_id: mapped.id, user_id: u.user.id, description: description.trim() }));
+        }
+        if (subtasks.length > 0) {
+          promises.push(supabase.from("task_subtasks")
+            .insert(subtasks.map((label, i) => ({
+              user_id: u.user.id, task_id: mapped.id, label, done: false, sort_order: i,
+            }))));
+        }
+        await Promise.all(promises);
+      }
+    }
     // Reset form
     setTitle("");
     setDescription("");

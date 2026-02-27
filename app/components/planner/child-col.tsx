@@ -16,6 +16,7 @@ interface ChildColProps {
   selectedNodes: string[];
   onToggleSelect: (id: string) => void;
   filterDimmed: ((node: PlanNode) => boolean) | null;
+  onAddChild?: (parentId: string) => void;
 }
 
 export function ChildCol({
@@ -31,6 +32,7 @@ export function ChildCol({
   selectedNodes,
   onToggleSelect,
   filterDimmed,
+  onAddChild,
 }: ChildColProps) {
   const isFirst = idx === 0;
   const isLast = idx === total - 1;
@@ -73,6 +75,7 @@ export function ChildCol({
         selectedNodes={selectedNodes}
         onToggleSelect={onToggleSelect}
         filterDimmed={filterDimmed}
+        onAddChild={onAddChild}
       />
     </div>
   );

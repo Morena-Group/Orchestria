@@ -7,10 +7,8 @@ import {
   Eye, Workflow, LogOut, User,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { PROJECTS } from "@/lib/data/projects";
-import { NOTIFICATIONS as INITIAL_NOTIFICATIONS } from "@/lib/data/notifications";
-import { INSTALLED_PLUGINS } from "@/lib/data/plugins";
 import { useProjectContext } from "@/lib/context/project-context";
+import { useProjects, useNotifications, usePlugins } from "@/lib/hooks";
 import { createClient } from "@/lib/supabase/client";
 
 const NOTIF_ICONS: Record<string, LucideIcon> = {
@@ -40,9 +38,11 @@ export function TopBar({ onOpenCmd }: TopBarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { activeProjectId } = useProjectContext();
+  const { projects } = useProjects();
+  const { notifications: notifs, markRead, markAllRead } = useNotifications();
+  const { plugins: installedPlugins } = usePlugins();
   const [showNotif, setShowNotif] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [notifs, setNotifs] = useState(INITIAL_NOTIFICATIONS);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const unread = notifs.filter((n) => !n.read).length;
 
@@ -65,16 +65,14 @@ export function TopBar({ onOpenCmd }: TopBarProps) {
   // Get label for current route
   const pluginMatch = pathname.match(/^\/plugins\/(.+)$/);
   const pluginLabel = pluginMatch
-    ? INSTALLED_PLUGINS.find((p) => p.id === pluginMatch[1])?.name
+    ? installedPlugins.find((p) => p.id === pluginMatch[1])?.name
     : null;
   const label = pluginLabel || LABELS[pathname] || "Dashboard";
 
   // Active project from context
-  const project = PROJECTS.find((p) => p.id === activeProjectId);
+  const project = projects.find((p) => p.id === activeProjectId);
 
-  const markAllRead = () => setNotifs((ns) => ns.map((n) => ({ ...n, read: true })));
-  const markRead = (id: string) =>
-    setNotifs((ns) => ns.map((n) => (n.id === id ? { ...n, read: true } : n)));
+  // markRead and markAllRead come from useNotifications hook
 
   return (
     <div className="h-14 flex items-center justify-between px-6 border-b border-border-default glass-topbar">

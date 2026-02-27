@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import type { PlanNode, ActivityType } from "@/lib/types";
 import { ST, ACT } from "@/lib/constants/status";
-import { WORKERS } from "@/lib/data/workers";
+import { useWorkers } from "@/lib/hooks";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -27,6 +27,7 @@ export function DetailPanel({
   onSave,
   onDelete,
 }: DetailPanelProps) {
+  const { workers } = useWorkers();
   const [status, setStatus] = useState(node.status);
   const [priority, setPriority] = useState(node.priority);
   const [activity, setActivity] = useState(node.act ?? "none");
@@ -107,7 +108,7 @@ export function DetailPanel({
           <Label>Worker</Label>
           <Select value={worker} onChange={(e) => setWorker(e.target.value)}>
             <option value="auto">Auto (Orchestrator)</option>
-            {WORKERS.map((w) => (
+            {workers.map((w) => (
               <option key={w.id} value={w.id}>
                 {w.isHuman ? "👤" : "🤖"} {w.name}
               </option>
@@ -121,7 +122,7 @@ export function DetailPanel({
             <option>Orchestrator decides</option>
             <option>Orchestrator review</option>
             <option>Human Review</option>
-            {WORKERS.filter((w) => w.isHuman).map((w) => (
+            {workers.filter((w) => w.isHuman).map((w) => (
               <option key={w.id}>{w.name}</option>
             ))}
           </Select>

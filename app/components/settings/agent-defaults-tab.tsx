@@ -3,11 +3,13 @@
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { WORKERS } from "@/lib/data/workers";
+import { useWorkers } from "@/lib/hooks";
 import { WT } from "@/lib/constants/status";
 import { FileText } from "lucide-react";
 
 export function AgentDefaultsTab() {
+  const { workers } = useWorkers();
+
   return (
     <div className="max-w-2xl space-y-6">
       <h2 className="text-lg font-semibold" style={{ color: "var(--color-text-primary)" }}>
@@ -55,7 +57,7 @@ export function AgentDefaultsTab() {
           Worker Setup Guides
         </h3>
         <div className="space-y-2">
-          {WORKERS.map((w) => (
+          {workers.map((w) => (
             <div
               key={w.id}
               className="flex items-center gap-3 p-3 rounded-xl border"

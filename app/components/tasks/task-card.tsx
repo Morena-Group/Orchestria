@@ -3,7 +3,7 @@
 import { Lock, AlertTriangle, CheckCircle2, Plus } from "lucide-react";
 import type { Task } from "@/lib/types";
 import { PRI } from "@/lib/constants/status";
-import { WORKERS } from "@/lib/data/workers";
+import { useWorkers } from "@/lib/hooks";
 import { Avatar } from "@/components/ui/avatar";
 import { TaskCardActions } from "./task-card-actions";
 
@@ -14,7 +14,8 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, onClick, onAction }: TaskCardProps) {
-  const worker = WORKERS.find((w) => w.id === task.w);
+  const { workers } = useWorkers();
+  const worker = workers.find((w) => w.id === task.w);
 
   return (
     <div

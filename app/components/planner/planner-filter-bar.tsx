@@ -1,6 +1,6 @@
 "use client";
 
-import { WORKERS } from "@/lib/data/workers";
+import { useWorkers } from "@/lib/hooks";
 import { ST, ACT } from "@/lib/constants/status";
 
 interface PlannerFilterBarProps {
@@ -24,6 +24,7 @@ export function PlannerFilterBar({
   onClear,
   hasFilter,
 }: PlannerFilterBarProps) {
+  const { workers } = useWorkers();
   return (
     <div
       className="px-4 py-2 border-b flex items-center gap-3 flex-shrink-0"
@@ -45,7 +46,7 @@ export function PlannerFilterBar({
         className="glass-input px-2 py-1 rounded text-xs outline-none"
       >
         <option value="all">All Workers</option>
-        {WORKERS.map((w) => (
+        {workers.map((w) => (
           <option key={w.id} value={w.id}>
             {w.name}
           </option>

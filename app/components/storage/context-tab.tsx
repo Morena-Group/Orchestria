@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { KNOWLEDGE_INDEX, COMPACTION_LOG } from "@/lib/data/storage";
-import { PROJECTS } from "@/lib/data/projects";
+import { useStorage, useProjects } from "@/lib/hooks";
 import { Label } from "@/components/ui/label";
 import {
   Globe, Clock, Settings, Check, Pin, X, CheckCircle2, Sparkles,
@@ -16,6 +15,8 @@ const MODES = [
 ] as const;
 
 export function ContextTab() {
+  const { knowledge, compactionLog } = useStorage();
+  const { projects } = useProjects();
   const [contextMode, setContextMode] = useState<"full" | "recency" | "custom">("recency");
   const [tokenBudget, setTokenBudget] = useState(8000);
   const [pinnedDocs, setPinnedDocs] = useState(["ki1", "ki2"]);
@@ -24,8 +25,8 @@ export function ContextTab() {
   const [showPreview, setShowPreview] = useState(false);
   const [showCompaction, setShowCompaction] = useState(false);
 
-  const totalIndexTokens = KNOWLEDGE_INDEX.reduce((s, ki) => s + ki.tokens, 0);
-  const pinnedTokens = KNOWLEDGE_INDEX.filter((ki) => pinnedDocs.includes(ki.id)).reduce((s, ki) => s + ki.tokens, 0);
+  const totalIndexTokens = knowledge.reduce((s, ki) => s + ki.tokens, 0);
+  const pinnedTokens = knowledge.filter((ki) => pinnedDocs.includes(ki.id)).reduce((s, ki) => s + ki.tokens, 0);
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
@@ -81,7 +82,7 @@ export function ContextTab() {
           </div>
           <div className="flex items-center gap-3">
             <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
-              {KNOWLEDGE_INDEX.length} entries &bull; {pinnedDocs.length} pinned
+              {knowledge.length} entries &bull; {pinnedDocs.length} pinned
             </span>
             <select
               value={tokenBudget}
@@ -148,7 +149,7 @@ export function ContextTab() {
                 <div>
                   <Label>Pinned Documents ({pinnedDocs.length})</Label>
                   <div className="flex flex-wrap gap-1.5 mt-1">
-                    {KNOWLEDGE_INDEX.filter((ki) => pinnedDocs.includes(ki.id)).map((ki) => (
+                    {knowledge.filter((ki) => pinnedDocs.includes(ki.id)).map((ki) => (
                       <div key={ki.id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg" style={{ backgroundColor: "var(--color-bg-elevated)" }}>
                         <Pin size={10} style={{ color: "var(--color-accent)" }} />
                         <span className="text-[10px]" style={{ color: "var(--color-text-primary)" }}>{ki.label}</span>
@@ -165,7 +166,7 @@ export function ContextTab() {
                 <div>
                   <Label>Excluded Projects</Label>
                   <div className="flex gap-2 mt-1">
-                    {PROJECTS.map((p) => {
+                    {projects.map((p) => {
                       const ex = excludedProjects.includes(p.id);
                       return (
                         <label key={p.id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg cursor-pointer" style={{ backgroundColor: "var(--color-bg-elevated)" }}>
@@ -208,7 +209,7 @@ export function ContextTab() {
               What the orchestrator would see with current settings:
             </p>
             <div className="space-y-1.5">
-              {KNOWLEDGE_INDEX
+              {knowledge
                 .filter((ki) => !excludedProjects.includes(ki.proj === "AI SaaS Platform" ? "p1" : ki.proj === "Marketing Automation" ? "p2" : ""))
                 .sort((a, b) => (pinnedDocs.includes(b.id) ? 1 : 0) - (pinnedDocs.includes(a.id) ? 1 : 0))
                 .map((ki) => {
@@ -251,7 +252,7 @@ export function ContextTab() {
               After task completion, raw steps are compacted into memory facts. This keeps the database lean.
             </p>
             <div className="space-y-2">
-              {COMPACTION_LOG.map((cl) => (
+              {compactionLog.map((cl) => (
                 <div key={cl.id} className="flex items-center gap-3 p-3 rounded-xl border" style={{ borderColor: "var(--color-border-default)", backgroundColor: "var(--color-bg-card)" }}>
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "var(--color-bg-elevated)" }}>
                     {cl.status === "done" ? (

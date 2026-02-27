@@ -1,9 +1,6 @@
 "use client";
 
-import { PROJECTS } from "@/lib/data/projects";
-import { WORKERS } from "@/lib/data/workers";
-import { TASKS } from "@/lib/data/tasks";
-import { NOTES_DATA } from "@/lib/data/notes";
+import { useProjects, useWorkers, useTasks, useNotes } from "@/lib/hooks";
 import { ST } from "@/lib/constants/status";
 import { getStatusIcon } from "@/lib/constants/icons";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +12,11 @@ interface BlockContentProps {
 }
 
 export function BlockContent({ blockId }: BlockContentProps) {
+  const { projects } = useProjects();
+  const { workers } = useWorkers();
+  const { tasks } = useTasks();
+  const { notes } = useNotes();
+
   switch (blockId) {
     case "exec-summary":
       return (
@@ -56,7 +58,7 @@ export function BlockContent({ blockId }: BlockContentProps) {
     case "per-project":
       return (
         <div className="space-y-2">
-          {PROJECTS.map((p) => {
+          {projects.map((p) => {
             const pct = Math.round((p.done / p.total) * 100);
             return (
               <div key={p.id} className="flex items-center gap-3">
@@ -92,7 +94,7 @@ export function BlockContent({ blockId }: BlockContentProps) {
       );
 
     case "worker-perf": {
-      const aiWorkers = WORKERS.filter((w) => !w.isHuman);
+      const aiWorkers = workers.filter((w) => !w.isHuman);
       const rates = [92, 87, 78, 95];
       const costs = ["$18.00", "$4.00", "$2.00", "$6.50"];
       return (
@@ -228,7 +230,7 @@ export function BlockContent({ blockId }: BlockContentProps) {
       );
 
     case "completed-list": {
-      const completed = TASKS.filter((t) => t.s === "completed");
+      const completed = tasks.filter((t) => t.s === "completed");
       if (completed.length === 0) {
         return (
           <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
@@ -239,7 +241,7 @@ export function BlockContent({ blockId }: BlockContentProps) {
       return (
         <div className="space-y-1">
           {completed.map((t) => {
-            const w = WORKERS.find((x) => x.id === t.w);
+            const w = workers.find((x) => x.id === t.w);
             return (
               <div
                 key={t.id}
@@ -278,7 +280,7 @@ export function BlockContent({ blockId }: BlockContentProps) {
     }
 
     case "blocked-analysis": {
-      const blocked = TASKS.filter(
+      const blocked = tasks.filter(
         (t) => t.s === "awaiting_input" || t.s === "failed"
       );
       return (
@@ -403,7 +405,7 @@ export function BlockContent({ blockId }: BlockContentProps) {
     case "notes-summary":
       return (
         <div className="space-y-2">
-          {NOTES_DATA.slice(0, 3).map((n) => (
+          {notes.slice(0, 3).map((n) => (
             <div
               key={n.id}
               className="p-2 rounded"

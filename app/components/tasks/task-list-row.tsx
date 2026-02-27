@@ -3,7 +3,7 @@
 import { Lock, AlertTriangle } from "lucide-react";
 import type { Task } from "@/lib/types";
 import { ST, PRI } from "@/lib/constants/status";
-import { WORKERS } from "@/lib/data/workers";
+import { useWorkers } from "@/lib/hooks";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { TaskListActions } from "./task-list-actions";
@@ -15,7 +15,8 @@ interface TaskListRowProps {
 }
 
 export function TaskListRow({ task, onClick, onAction }: TaskListRowProps) {
-  const worker = WORKERS.find((w) => w.id === task.w);
+  const { workers } = useWorkers();
+  const worker = workers.find((w) => w.id === task.w);
   const sc = ST[task.s];
   const pc = PRI[task.p];
 

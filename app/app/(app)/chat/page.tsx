@@ -4,9 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Plus, Send, Paperclip, Database, FileText, X, MessageSquare,
 } from "lucide-react";
-import type { ChatMessage } from "@/lib/types";
-import { CHATS } from "@/lib/data/chats";
-import { INSTALLED_PLUGINS } from "@/lib/data/plugins";
+import { useChats, usePlugins } from "@/lib/hooks";
 import { Avatar } from "@/components/ui/avatar";
 
 const CHAT_LIST = [
@@ -25,7 +23,8 @@ const BOT_REPLIES = [
 ];
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState<ChatMessage[]>(CHATS);
+  const { messages, sendMessage, clearMessages, setMessages } = useChats();
+  const { plugins } = usePlugins();
   const [input, setInput] = useState("");
   const [showCtx, setShowCtx] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -42,29 +41,20 @@ export default function ChatPage() {
     const text = input.trim();
     if (!text) return;
 
-    const userMsg: ChatMessage = {
-      id: `m${Date.now()}`,
-      role: "user",
-      content: text,
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    };
-    setMessages((prev) => [...prev, userMsg]);
+    sendMessage(text, "user");
     setInput("");
 
     // Mock bot reply after 1s
     setTimeout(() => {
-      const reply: ChatMessage = {
-        id: `m${Date.now() + 1}`,
-        role: "bot",
-        content: BOT_REPLIES[Math.floor(Math.random() * BOT_REPLIES.length)],
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
-      setMessages((prev) => [...prev, reply]);
+      sendMessage(
+        BOT_REPLIES[Math.floor(Math.random() * BOT_REPLIES.length)],
+        "bot"
+      );
     }, 1000);
   }
 
   function handleNewChat() {
-    setMessages([]);
+    clearMessages();
     setInput("");
   }
 
@@ -230,7 +220,7 @@ export default function ChatPage() {
                 Data Sources
               </h4>
               <div className="space-y-2">
-                {INSTALLED_PLUGINS.map((plg) => (
+                {plugins.map((plg) => (
                   <div key={plg.id} className="flex items-center gap-2 p-2 rounded bg-bg-card">
                     <span className="text-sm">{plg.icon}</span>
                     <span className="text-xs flex-1 text-text-primary">{plg.name}</span>

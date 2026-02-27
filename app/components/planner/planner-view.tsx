@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
-import type { PlanNode, PlanChat } from "@/lib/types";
-import { PYRAMID as INITIAL_PYRAMID, PLANS, PLAN_TEMPLATES, PLAN_CHATS } from "@/lib/data/planner";
-import { WORKERS } from "@/lib/data/workers";
+import { useState, useCallback } from "react";
+import type { PlanNode } from "@/lib/types";
+import { usePlanner } from "@/lib/hooks";
 import { createFilterFn } from "@/lib/utils/planner";
 import { PlannerToolbar } from "./planner-toolbar";
 import { PlannerFilterBar } from "./planner-filter-bar";
@@ -17,11 +16,15 @@ import { BulkActionBar } from "./bulk-action-bar";
 import { Plus } from "lucide-react";
 
 export function PlannerView() {
-  // Data state
-  const [nodes, setNodes] = useState<PlanNode[]>(INITIAL_PYRAMID);
-  const [chatMessages, setChatMessages] = useState<PlanChat[]>(PLAN_CHATS);
-
   // Selection & navigation
+  const [activePlan, setActivePlan] = useState("plan1");
+
+  // Data from Supabase hooks
+  const {
+    plans, nodes, chatMessages,
+    updateNode, deleteNode, addNode, sendChat,
+  } = usePlanner(activePlan);
+
   const [selected, setSelected] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({
     r0: true,
@@ -29,7 +32,6 @@ export function PlannerView() {
     r2: true,
     r5: true,
   });
-  const [activePlan, setActivePlan] = useState("plan1");
 
   // Panels & dropdowns
   const [showVersions, setShowVersions] = useState(false);
@@ -62,28 +64,19 @@ export function PlannerView() {
 
   // Node CRUD handlers
   const handleNodeUpdate = useCallback((nodeId: string, updates: Partial<PlanNode>) => {
-    setNodes((prev) => prev.map((n) => (n.id === nodeId ? { ...n, ...updates } : n)));
+    updateNode(nodeId, updates);
     if (selected === nodeId) {
       setSelected(nodeId); // Re-trigger derived selNode
     }
-  }, [selected]);
+  }, [selected, updateNode]);
 
   const handleNodeDelete = useCallback((nodeId: string) => {
-    setNodes((prev) => {
-      // Remove node and references from parents
-      const filtered = prev.filter((n) => n.id !== nodeId);
-      return filtered.map((n) => ({
-        ...n,
-        children: n.children.filter((c) => c !== nodeId),
-      }));
-    });
+    deleteNode(nodeId);
     if (selected === nodeId) setSelected(null);
-  }, [selected]);
+  }, [selected, deleteNode]);
 
-  const handleAddPhase = useCallback(() => {
-    const newId = `r${Date.now()}`;
-    const newNode: PlanNode = {
-      id: newId,
+  const handleAddPhase = useCallback(async () => {
+    const newNode = await addNode({
       level: 0,
       label: "New Phase",
       status: "draft",
@@ -94,43 +87,32 @@ export function PlannerView() {
       tags: [],
       children: [],
       description: "New phase — click to edit",
-    };
-    setNodes((prev) => [...prev, newNode]);
-    setSelected(newId);
-    setExpanded((prev) => ({ ...prev, [newId]: true }));
-  }, []);
+    });
+    if (newNode) {
+      setSelected(newNode.id);
+      setExpanded((prev) => ({ ...prev, [newNode.id]: true }));
+    }
+  }, [addNode]);
 
   const handleChatSend = useCallback(() => {
     const text = chatInput.trim();
     if (!text) return;
-    const userMsg: PlanChat = { role: "user", content: text, time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) };
-    setChatMessages((prev) => [...prev, userMsg]);
+    sendChat(text, "user");
     setChatInput("");
     setTimeout(() => {
-      const botMsg: PlanChat = {
-        role: "bot",
-        content: "I've noted your request. Let me adjust the plan accordingly.",
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
-      setChatMessages((prev) => [...prev, botMsg]);
+      sendChat("I've noted your request. Let me adjust the plan accordingly.", "bot");
     }, 1000);
-  }, [chatInput]);
+  }, [chatInput, sendChat]);
 
   const handleBulkAction = useCallback((action: string, value: string) => {
     if (action === "delete") {
-      setNodes((prev) => {
-        const filtered = prev.filter((n) => !selectedNodes.includes(n.id));
-        return filtered.map((n) => ({
-          ...n,
-          children: n.children.filter((c) => !selectedNodes.includes(c)),
-        }));
-      });
+      selectedNodes.forEach((id) => deleteNode(id));
       setSelectedNodes([]);
       setSelectMode(false);
     } else {
       console.log("Bulk action:", action, value, "on nodes:", selectedNodes);
     }
-  }, [selectedNodes]);
+  }, [selectedNodes, deleteNode]);
 
   const toggleExp = useCallback(
     (id: string) => setExpanded((p) => ({ ...p, [id]: !p[id] })),
@@ -164,6 +146,7 @@ export function PlannerView() {
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Toolbar */}
       <PlannerToolbar
+        plans={plans}
         activePlan={activePlan}
         onActivePlanChange={setActivePlan}
         nodeCount={nodes.length}

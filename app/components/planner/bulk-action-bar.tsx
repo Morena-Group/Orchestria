@@ -1,6 +1,6 @@
 "use client";
 
-import { WORKERS } from "@/lib/data/workers";
+import { useWorkers } from "@/lib/hooks";
 import { ST, ACT } from "@/lib/constants/status";
 import { Trash2, X } from "lucide-react";
 
@@ -11,6 +11,7 @@ interface BulkActionBarProps {
 }
 
 export function BulkActionBar({ selectedCount, onClose, onBulkAction }: BulkActionBarProps) {
+  const { workers } = useWorkers();
   return (
     <div
       className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 px-5 py-3 rounded-xl border z-30"
@@ -35,7 +36,7 @@ export function BulkActionBar({ selectedCount, onClose, onBulkAction }: BulkActi
         }}
       >
         <option value="">Set Worker...</option>
-        {WORKERS.map((w) => (
+        {workers.map((w) => (
           <option key={w.id} value={w.id}>{w.name}</option>
         ))}
       </select>

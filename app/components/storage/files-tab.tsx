@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { StorageFile } from "@/lib/types";
-import { STORAGE_FILES } from "@/lib/data/storage";
+import { useStorage } from "@/lib/hooks";
 import { Button } from "@/components/ui/button";
 import { FileDetailPanel } from "./file-detail-panel";
 import { FileTree } from "./file-tree";
@@ -11,11 +11,12 @@ import { Search, Upload } from "lucide-react";
 const FILTERS = ["all", "recent", "review", "artifacts", "uploads"] as const;
 
 export function FilesTab() {
+  const { files } = useStorage();
   const [fileFilter, setFileFilter] = useState("all");
   const [fileSearch, setFileSearch] = useState("");
   const [selectedFile, setSelectedFile] = useState<StorageFile | null>(null);
 
-  const filteredFiles = STORAGE_FILES.filter((f) => {
+  const filteredFiles = files.filter((f) => {
     if (fileFilter === "review") return f.status === "review";
     if (fileFilter === "artifacts") return !f.isUpload;
     if (fileFilter === "uploads") return f.isUpload;

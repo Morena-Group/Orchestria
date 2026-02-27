@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Plus, Filter, Layers, ListTodo } from "lucide-react";
 import type { Task, TaskStatus } from "@/lib/types";
-import { TASKS } from "@/lib/data/tasks";
+import { useTasks } from "@/lib/hooks";
 import { ST, PRI, KANBAN_COLUMNS } from "@/lib/constants/status";
 import { getStatusIcon } from "@/lib/constants/icons";
 import { Button } from "@/components/ui/button";
@@ -21,13 +21,11 @@ export default function TasksPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const { activeProjectId } = useProjectContext();
+  const { tasks } = useTasks(activeProjectId);
 
   function handleAction(taskId: string, actionId: string, comment?: string) {
     console.log("Task action:", { taskId, actionId, comment });
   }
-
-  // Filter to active project
-  const tasks = TASKS.filter((t) => t.pr === activeProjectId);
 
   const sortedTasks = [...tasks].sort((a, b) => {
     if (sortBy === "status") return KANBAN_COLUMNS.indexOf(a.s) - KANBAN_COLUMNS.indexOf(b.s);

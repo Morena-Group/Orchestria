@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Plus, Bot } from "lucide-react";
 import type { Worker } from "@/lib/types";
-import { WORKERS } from "@/lib/data/workers";
+import { useWorkers } from "@/lib/hooks";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { WorkerCard } from "@/components/workers/worker-card";
@@ -11,6 +11,7 @@ import { AddWorkerModal } from "@/components/workers/add-worker-modal";
 import { WorkerDetailModal } from "@/components/workers/worker-detail-modal";
 
 export default function WorkersPage() {
+  const { workers } = useWorkers();
   const [showModal, setShowModal] = useState(false);
   const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
 
@@ -26,7 +27,7 @@ export default function WorkersPage() {
         </Button>
       </div>
 
-      {WORKERS.length === 0 ? (
+      {workers.length === 0 ? (
         <EmptyState
           icon={Bot}
           title="No workers configured"
@@ -39,7 +40,7 @@ export default function WorkersPage() {
           className="grid gap-4"
           style={{ gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))" }}
         >
-          {WORKERS.map((w) => (
+          {workers.map((w) => (
             <WorkerCard key={w.id} worker={w} onClick={() => setSelectedWorker(w)} />
           ))}
         </div>

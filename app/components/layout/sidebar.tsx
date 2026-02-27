@@ -8,9 +8,8 @@ import {
   FileText, BarChart3, HardDrive, Settings, Zap,
   ChevronDown, ChevronRight, ChevronLeft, Plus,
 } from "lucide-react";
-import { PROJECTS } from "@/lib/data/projects";
-import { INSTALLED_PLUGINS } from "@/lib/data/plugins";
 import { useProjectContext } from "@/lib/context/project-context";
+import { useProjects, usePlugins } from "@/lib/hooks";
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -28,6 +27,8 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { activeProjectId, setActiveProjectId } = useProjectContext();
+  const { projects } = useProjects();
+  const { plugins } = usePlugins();
   const [collapsed, setCollapsed] = useState(false);
   const [projectsExpanded, setProjectsExpanded] = useState(true);
 
@@ -81,7 +82,7 @@ export function Sidebar() {
         })}
 
         {/* Plugin tabs */}
-        {INSTALLED_PLUGINS.length > 0 && (
+        {plugins.length > 0 && (
           <>
             {!collapsed && (
               <div className="mt-5 mb-1 px-4">
@@ -90,7 +91,7 @@ export function Sidebar() {
                 </span>
               </div>
             )}
-            {INSTALLED_PLUGINS.map((plg) => {
+            {plugins.map((plg) => {
               const isActive = pathname === `/plugins/${plg.id}`;
               return (
                 <Link
@@ -130,7 +131,7 @@ export function Sidebar() {
               Projects
             </button>
             {projectsExpanded &&
-              PROJECTS.map((p) => (
+              projects.map((p) => (
                 <button
                   key={p.id}
                   onClick={() => {

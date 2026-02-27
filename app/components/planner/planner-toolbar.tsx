@@ -1,6 +1,6 @@
 "use client";
 
-import { PLANS } from "@/lib/data/planner";
+import type { Plan } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import {
   Layers,
@@ -16,6 +16,7 @@ import {
 import { VersionsDropdown } from "./versions-dropdown";
 
 interface PlannerToolbarProps {
+  plans: Plan[];
   activePlan: string;
   onActivePlanChange: (planId: string) => void;
   nodeCount: number;
@@ -36,6 +37,7 @@ interface PlannerToolbarProps {
 }
 
 export function PlannerToolbar({
+  plans,
   activePlan,
   onActivePlanChange,
   nodeCount,
@@ -66,7 +68,7 @@ export function PlannerToolbar({
           onChange={(e) => onActivePlanChange(e.target.value)}
           className="glass-input px-3 py-1.5 rounded-lg text-sm font-semibold outline-none"
         >
-          {PLANS.map((p) => (
+          {plans.map((p) => (
             <option key={p.id} value={p.id}>
               {p.name}
             </option>

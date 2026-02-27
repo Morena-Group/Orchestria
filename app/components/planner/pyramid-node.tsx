@@ -2,7 +2,7 @@
 
 import type { PlanNode } from "@/lib/types";
 import { ST, PRI, ACT } from "@/lib/constants/status";
-import { WORKERS } from "@/lib/data/workers";
+import { useWorkers } from "@/lib/hooks";
 import { getProgress } from "@/lib/utils/planner";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
@@ -34,7 +34,8 @@ export function PyramidNode({
   onToggleSelect,
   filterDimmed,
 }: PyramidNodeProps) {
-  const w = WORKERS.find((x) => x.id === node.worker);
+  const { workers } = useWorkers();
+  const w = workers.find((x) => x.id === node.worker);
   const sc = ST[node.status] ?? ST.draft;
   const ac = node.act ? ACT[node.act] : null;
   const isSel = selected === node.id;

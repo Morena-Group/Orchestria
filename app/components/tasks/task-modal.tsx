@@ -11,12 +11,7 @@ import { getActionIcon } from "@/lib/constants/icons";
 import { TASK_ACTIONS } from "./task-actions-config";
 import type { Task } from "@/lib/types";
 import { ST, PRI } from "@/lib/constants/status";
-import { WORKERS } from "@/lib/data/workers";
-import { PROJECTS } from "@/lib/data/projects";
-import {
-  TASK_SUBTASKS, TASK_DESCRIPTIONS, TASK_TIMELINE,
-  TASK_ARTIFACTS, TASK_COMMENTS,
-} from "@/lib/data/tasks";
+import { useWorkers, useProjects, useTaskDetail } from "@/lib/hooks";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
@@ -36,11 +31,18 @@ interface TaskModalProps {
 }
 
 export function TaskModal({ task, onClose }: TaskModalProps) {
-  const worker = WORKERS.find((w) => w.id === task.w);
+  const { workers } = useWorkers();
+  const { projects } = useProjects();
+  const { detail, toggleSubtask, addComment } = useTaskDetail(task.id);
+  const worker = workers.find((w) => w.id === task.w);
   const sc = ST[task.s];
   const [tab, setTab] = useState("overview");
   const [commentInput, setCommentInput] = useState("");
-  const desc = TASK_DESCRIPTIONS[task.id] || "No description provided.";
+  const desc = detail?.description || "No description provided.";
+  const subtasks = detail?.subtasks ?? [];
+  const comments = detail?.comments ?? [];
+  const timeline = detail?.timeline ?? [];
+  const artifacts = detail?.artifacts ?? [];
 
   const tabs = [
     { id: "overview", l: "Overview" },
@@ -159,13 +161,9 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
                       />
                     </div>
                     <div className="space-y-1">
-                      {Array.from({ length: task.sub }, (_, i) => {
-                        const done = i < task.subD;
-                        const subNames = TASK_SUBTASKS[task.id];
-                        const name = subNames?.[i] || `Subtask ${i + 1}`;
-                        return (
-                          <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-glass">
-                            {done ? (
+                      {subtasks.map((sub) => (
+                          <div key={sub.id} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-glass cursor-pointer" onClick={() => toggleSubtask(sub.id)}>
+                            {sub.done ? (
                               <CheckCircle2 size={14} className="text-accent" />
                             ) : (
                               <div className="w-3.5 h-3.5 rounded-full border border-text-muted" />
@@ -173,16 +171,15 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
                             <span
                               className="text-xs flex-1"
                               style={{
-                                color: done ? "#71717a" : "#ededef",
-                                textDecoration: done ? "line-through" : "none",
+                                color: sub.done ? "#71717a" : "#ededef",
+                                textDecoration: sub.done ? "line-through" : "none",
                               }}
                             >
-                              {name}
+                              {sub.label}
                             </span>
-                            {done && <span className="text-[9px] text-text-muted">Completed</span>}
+                            {sub.done && <span className="text-[9px] text-text-muted">Completed</span>}
                           </div>
-                        );
-                      })}
+                        ))}
                     </div>
                   </div>
                 )}
@@ -207,10 +204,10 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
                 {/* Comments */}
                 <div>
                   <span className="text-[10px] uppercase tracking-wider block mb-2 text-text-muted">
-                    Comments ({TASK_COMMENTS.length})
+                    Comments ({comments.length})
                   </span>
                   <div className="space-y-3 mb-3">
-                    {TASK_COMMENTS.map((c) => (
+                    {comments.map((c) => (
                       <div key={c.id} className="flex gap-2.5">
                         {c.isHuman ? (
                           <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 bg-bg-elevated text-text-secondary">
@@ -266,7 +263,7 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
                   <Label>Worker</Label>
                   <Select defaultValue={task.w || "auto"}>
                     <option value="auto">Auto</option>
-                    {WORKERS.map((wr) => (
+                    {workers.map((wr) => (
                       <option key={wr.id} value={wr.id}>{wr.name}</option>
                     ))}
                   </Select>
@@ -277,7 +274,7 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
                     <option>Orchestrator decides</option>
                     <option>Orchestrator review</option>
                     <option>Human Review</option>
-                    {WORKERS.filter((wr) => wr.isHuman).map((wr) => (
+                    {workers.filter((wr) => wr.isHuman).map((wr) => (
                       <option key={wr.id}>{wr.name}</option>
                     ))}
                   </Select>
@@ -285,23 +282,23 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
                 <div>
                   <Label>Project</Label>
                   <Select defaultValue={task.pr}>
-                    {PROJECTS.map((p) => (
+                    {projects.map((p) => (
                       <option key={p.id} value={p.id}>{p.name}</option>
                     ))}
                   </Select>
                 </div>
                 <div className="border-t border-border-default pt-3">
-                  <Label>Files ({TASK_ARTIFACTS.length})</Label>
-                  {TASK_ARTIFACTS.slice(0, 2).map((f) => (
+                  <Label>Files ({artifacts.length})</Label>
+                  {artifacts.slice(0, 2).map((f) => (
                     <div key={f.name} className="flex items-center gap-2 py-1">
                       <File size={12} className="text-accent" />
                       <span className="text-[10px] truncate flex-1 text-text-primary">{f.name}</span>
                       <span className="text-[9px] text-text-muted">{f.size}</span>
                     </div>
                   ))}
-                  {TASK_ARTIFACTS.length > 2 && (
+                  {artifacts.length > 2 && (
                     <button className="text-[10px] mt-1 text-accent-hover">
-                      +{TASK_ARTIFACTS.length - 2} more
+                      +{artifacts.length - 2} more
                     </button>
                   )}
                 </div>
@@ -341,7 +338,7 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
               <div className="relative">
                 <div className="absolute left-[15px] top-0 bottom-0 w-px bg-border-default" />
                 <div className="space-y-0">
-                  {TASK_TIMELINE.map((ev, i) => {
+                  {timeline.map((ev, i) => {
                     const Ic = TIMELINE_ICONS[ev.type] || Play;
                     const color = ev.type === "status" ? "#a1a1aa" : "#c9a96e";
                     return (
@@ -380,12 +377,12 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
             <div className="p-5">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-[10px] uppercase tracking-wider text-text-muted">
-                  Artifacts & Files ({TASK_ARTIFACTS.length})
+                  Artifacts & Files ({artifacts.length})
                 </span>
                 <Button><Upload size={12} /> Upload</Button>
               </div>
               <div className="space-y-2">
-                {TASK_ARTIFACTS.map((f) => (
+                {artifacts.map((f) => (
                   <div
                     key={f.name}
                     className="flex items-center gap-3 p-3 rounded-lg glass-input hover:border-[rgba(200,169,110,0.15)] transition-all duration-150"

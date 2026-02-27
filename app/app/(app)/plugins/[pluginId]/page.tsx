@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   ArrowLeft, RefreshCw, Settings, Unplug, TrendingUp, TrendingDown,
 } from "lucide-react";
-import { INSTALLED_PLUGINS } from "@/lib/data/plugins";
+import { usePlugins } from "@/lib/hooks";
 import type { PluginDataMetric, PluginDataRow } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -13,7 +13,8 @@ import { Badge } from "@/components/ui/badge";
 
 export default function PluginPage() {
   const { pluginId } = useParams<{ pluginId: string }>();
-  const plugin = INSTALLED_PLUGINS.find((p) => p.id === pluginId);
+  const { plugins } = usePlugins();
+  const plugin = plugins.find((p) => p.id === pluginId);
 
   if (!plugin) {
     return (

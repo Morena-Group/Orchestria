@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { REPORT_BLOCKS } from "@/lib/data/briefings";
-import { PROJECTS } from "@/lib/data/projects";
+import { useProjects } from "@/lib/hooks";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ReportBlock } from "./report-block";
@@ -39,6 +39,7 @@ export const BLOCK_ICON_MAP: Record<string, LucideIcon> = {
 };
 
 export function BriefingsView() {
+  const { projects } = useProjects();
   const [blocks, setBlocks] = useState<string[]>(
     REPORT_BLOCKS.filter((b) => b.default).map((b) => b.id)
   );
@@ -84,7 +85,7 @@ export function BriefingsView() {
 
       {/* Scope + period filters */}
       <div className="flex items-center gap-2 mb-4">
-        {["all", ...PROJECTS.map((p) => p.id)].map((s) => (
+        {["all", ...projects.map((p) => p.id)].map((s) => (
           <button
             key={s}
             onClick={() => setScope(s)}
@@ -104,7 +105,7 @@ export function BriefingsView() {
           >
             {s === "all"
               ? "All Projects"
-              : PROJECTS.find((p) => p.id === s)?.name ?? s}
+              : projects.find((p) => p.id === s)?.name ?? s}
           </button>
         ))}
         <div className="ml-auto flex gap-1">

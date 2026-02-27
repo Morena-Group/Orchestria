@@ -4,9 +4,7 @@ import { useState } from "react";
 import {
   Plus, Calendar, ChevronDown, ChevronRight, Lock, GripVertical, X,
 } from "lucide-react";
-import { PROJECTS } from "@/lib/data/projects";
-import { WORKERS } from "@/lib/data/workers";
-import { TASKS } from "@/lib/data/tasks";
+import { useProjects, useWorkers, useTasks } from "@/lib/hooks";
 import { ST } from "@/lib/constants/status";
 import type { Priority } from "@/lib/types";
 import { Modal } from "@/components/ui/modal";
@@ -22,9 +20,12 @@ interface NewTaskModalProps {
 }
 
 export function NewTaskModal({ open, onClose }: NewTaskModalProps) {
+  const { projects } = useProjects();
+  const { workers } = useWorkers();
+  const { tasks } = useTasks();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [project, setProject] = useState(PROJECTS[0]?.id ?? "");
+  const [project, setProject] = useState(projects[0]?.id ?? "");
   const [priority, setPriority] = useState<Priority>("medium");
   const [worker, setWorker] = useState("auto");
   const [reviewBy, setReviewBy] = useState("orchestrator");
@@ -39,7 +40,7 @@ export function NewTaskModal({ open, onClose }: NewTaskModalProps) {
   const [repeat, setRepeat] = useState("none");
   const [lockTask, setLockTask] = useState(false);
 
-  const filteredDeps = TASKS.filter((t) => {
+  const filteredDeps = tasks.filter((t) => {
     if (!depSearch) return true;
     return t.title.toLowerCase().includes(depSearch.toLowerCase());
   }).slice(0, 6);
@@ -94,7 +95,7 @@ export function NewTaskModal({ open, onClose }: NewTaskModalProps) {
           <div>
             <Label>Project</Label>
             <Select value={project} onChange={(e) => setProject(e.target.value)}>
-              {PROJECTS.map((p) => (
+              {projects.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </Select>
@@ -115,7 +116,7 @@ export function NewTaskModal({ open, onClose }: NewTaskModalProps) {
             <Label>Assign Worker</Label>
             <Select value={worker} onChange={(e) => setWorker(e.target.value)}>
               <option value="auto">Auto (Orchestrator decides)</option>
-              {WORKERS.map((w) => (
+              {workers.map((w) => (
                 <option key={w.id} value={w.id}>
                   {w.isHuman ? "\u{1F464}" : "\u{1F916}"} {w.name}
                 </option>
@@ -128,7 +129,7 @@ export function NewTaskModal({ open, onClose }: NewTaskModalProps) {
               <option value="orchestrator">Orchestrator decides</option>
               <option value="orchestrator-review">Orchestrator review</option>
               <option value="human">Human Review</option>
-              {WORKERS.filter((w) => w.isHuman).map((w) => (
+              {workers.filter((w) => w.isHuman).map((w) => (
                 <option key={w.id} value={w.id}>{w.name}</option>
               ))}
             </Select>

@@ -1,11 +1,12 @@
 "use client";
 
-import { WORKERS } from "@/lib/data/workers";
+import { useWorkers } from "@/lib/hooks";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Sparkles } from "lucide-react";
 
 export function CondenseBanner() {
+  const { workers } = useWorkers();
   return (
     <div
       className="mb-6 p-4 rounded-xl border"
@@ -25,7 +26,7 @@ export function CondenseBanner() {
         <select
           className="glass-input px-2 py-1 rounded text-xs outline-none"
         >
-          {WORKERS.map((w) => (
+          {workers.map((w) => (
             <option key={w.id}>{w.name}</option>
           ))}
         </select>

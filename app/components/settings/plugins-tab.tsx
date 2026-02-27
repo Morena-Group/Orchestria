@@ -1,11 +1,13 @@
 "use client";
 
-import { INSTALLED_PLUGINS, PLUGIN_MARKETPLACE } from "@/lib/data/plugins";
+import { PLUGIN_MARKETPLACE } from "@/lib/data/plugins";
+import { usePlugins } from "@/lib/hooks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Settings, Unplug, Download, Info } from "lucide-react";
 
 export function PluginsTab() {
+  const { plugins } = usePlugins();
   return (
     <div className="max-w-2xl space-y-6">
       <h2 className="text-lg font-semibold" style={{ color: "var(--color-text-primary)" }}>
@@ -15,10 +17,10 @@ export function PluginsTab() {
       {/* Installed Plugins */}
       <div>
         <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--color-text-primary)" }}>
-          Installed ({INSTALLED_PLUGINS.length})
+          Installed ({plugins.length})
         </h3>
         <div className="space-y-2">
-          {INSTALLED_PLUGINS.map((p) => (
+          {plugins.map((p) => (
             <div
               key={p.id}
               className="flex items-center gap-3 p-4 rounded-xl border"

@@ -4,10 +4,8 @@ import { useState } from "react";
 import {
   CheckCircle2, Plus, Edit3, AlertTriangle,
 } from "lucide-react";
-import { TASKS } from "@/lib/data/tasks";
-import { WORKERS } from "@/lib/data/workers";
-import { PROJECTS } from "@/lib/data/projects";
 import { ST } from "@/lib/constants/status";
+import { useTasks, useWorkers, useProjects } from "@/lib/hooks";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusDot } from "@/components/ui/status-dot";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +18,10 @@ interface WidgetContentProps {
 }
 
 export function WidgetContent({ id }: WidgetContentProps) {
+  const { tasks: TASKS } = useTasks();
+  const { workers: WORKERS } = useWorkers();
+  const { projects: PROJECTS } = useProjects();
+
   if (id === "total-tasks") {
     const stats = [
       { l: "Running", v: TASKS.filter((t) => t.s === "running").length, c: "#c9a96e" },

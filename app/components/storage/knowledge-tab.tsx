@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { KNOWLEDGE_INDEX, MEMORY_FACTS } from "@/lib/data/storage";
+import { useStorage } from "@/lib/hooks";
 import { Button } from "@/components/ui/button";
 import {
   Search, Plus, Pin, ArrowRight, ChevronDown, ChevronRight,
@@ -19,12 +19,13 @@ const TYPE_ICONS: Record<KnowledgeType, LucideIcon> = {
 };
 
 export function KnowledgeTab() {
+  const { knowledge, memoryFacts } = useStorage();
   const [kiSearch, setKiSearch] = useState("");
   const [mfSearch, setMfSearch] = useState("");
   const [pinnedDocs, setPinnedDocs] = useState(["ki1", "ki2"]);
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
 
-  const filteredKI = KNOWLEDGE_INDEX.filter((ki) => {
+  const filteredKI = knowledge.filter((ki) => {
     if (!kiSearch) return true;
     const q = kiSearch.toLowerCase();
     return (
@@ -34,14 +35,14 @@ export function KnowledgeTab() {
     );
   });
 
-  const filteredMF = MEMORY_FACTS.filter((mf) => {
+  const filteredMF = memoryFacts.filter((mf) => {
     if (!mfSearch) return true;
     const q = mfSearch.toLowerCase();
     return mf.content.toLowerCase().includes(q) || mf.tags.some((t) => t.includes(q));
   });
 
-  const totalIndexTokens = KNOWLEDGE_INDEX.reduce((s, ki) => s + ki.tokens, 0);
-  const pinnedTokens = KNOWLEDGE_INDEX.filter((ki) => pinnedDocs.includes(ki.id)).reduce((s, ki) => s + ki.tokens, 0);
+  const totalIndexTokens = knowledge.reduce((s, ki) => s + ki.tokens, 0);
+  const pinnedTokens = knowledge.filter((ki) => pinnedDocs.includes(ki.id)).reduce((s, ki) => s + ki.tokens, 0);
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
@@ -151,7 +152,7 @@ export function KnowledgeTab() {
 
         <div className="flex items-center gap-3 mt-2">
           <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
-            {KNOWLEDGE_INDEX.length} entries &bull; {totalIndexTokens} tokens total &bull;{" "}
+            {knowledge.length} entries &bull; {totalIndexTokens} tokens total &bull;{" "}
             {pinnedDocs.length} pinned ({pinnedTokens} tokens)
           </span>
         </div>
@@ -216,7 +217,7 @@ export function KnowledgeTab() {
 
         <div className="mt-2">
           <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
-            {MEMORY_FACTS.length} facts stored &bull; vector embeddings: text-embedding-3-small (1536d)
+            {memoryFacts.length} facts stored &bull; vector embeddings: text-embedding-3-small (1536d)
           </span>
         </div>
       </div>

@@ -8,12 +8,10 @@ import {
   Edit3, Sparkles, FolderOpen,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { TASKS } from "@/lib/data/tasks";
-import { WORKERS } from "@/lib/data/workers";
-import { PROJECTS } from "@/lib/data/projects";
 import { ST } from "@/lib/constants/status";
 import { PRI } from "@/lib/constants/status";
 import { useProjectContext } from "@/lib/context/project-context";
+import { useTasks, useWorkers, useProjects } from "@/lib/hooks";
 
 interface PaletteItem {
   id: string;
@@ -33,7 +31,7 @@ const CAT_LABELS: Record<string, string> = {
   project: "Projects",
 };
 
-function buildItems(): PaletteItem[] {
+function buildItems(tasks: import("@/lib/types").Task[], workers: import("@/lib/types").Worker[], projects: import("@/lib/types").Project[]): PaletteItem[] {
   const navItems: PaletteItem[] = [
     { id: "nav-dash", cat: "nav", label: "Go to Dashboard", icon: LayoutDashboard, desc: "Overview & widgets", href: "/dashboard" },
     { id: "nav-tasks", cat: "nav", label: "Go to My Tasks", icon: ListTodo, desc: "Kanban board", href: "/tasks" },
@@ -46,7 +44,7 @@ function buildItems(): PaletteItem[] {
     { id: "nav-settings", cat: "nav", label: "Go to Settings", icon: Settings, desc: "Profile, API keys, plugins", href: "/settings" },
   ];
 
-  const taskItems: PaletteItem[] = TASKS.map((t) => ({
+  const taskItems: PaletteItem[] = tasks.map((t) => ({
     id: `task-${t.id}`,
     cat: "task",
     label: t.title,
@@ -55,7 +53,7 @@ function buildItems(): PaletteItem[] {
     href: "/tasks",
   }));
 
-  const workerItems: PaletteItem[] = WORKERS.map((w) => ({
+  const workerItems: PaletteItem[] = workers.map((w) => ({
     id: `worker-${w.id}`,
     cat: "worker",
     label: w.name,
@@ -71,7 +69,7 @@ function buildItems(): PaletteItem[] {
     { id: "act-brief", cat: "action", label: "Generate Briefing", icon: Sparkles, desc: "Generate a new report", href: "/briefings" },
   ];
 
-  const projectItems: PaletteItem[] = PROJECTS.map((p) => ({
+  const projectItems: PaletteItem[] = projects.map((p) => ({
     id: `proj-${p.id}`,
     cat: "project",
     label: p.name,
@@ -91,13 +89,16 @@ interface CommandPaletteProps {
 export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const router = useRouter();
   const { setActiveProjectId } = useProjectContext();
+  const { tasks } = useTasks();
+  const { workers } = useWorkers();
+  const { projects } = useProjects();
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState("all");
   const [sel, setSel] = useState(0);
 
   if (!open) return null;
 
-  const items = buildItems();
+  const items = buildItems(tasks, workers, projects);
 
   const filtered = items.filter((i) => {
     if (cat !== "all" && i.cat !== cat) return false;

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import type { Note } from "@/lib/types";
-import { NOTES_DATA } from "@/lib/data/notes";
+import { useNotes } from "@/lib/hooks";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { NoteCard } from "./note-card";
@@ -11,7 +11,7 @@ import { CondenseBanner } from "./condense-banner";
 import { FileText, Plus, Shrink } from "lucide-react";
 
 export function NotesView() {
-  const [notes, setNotes] = useState<Note[]>(NOTES_DATA);
+  const { notes, createNote, updateNote, togglePin } = useNotes();
   const [condense, setCondense] = useState(false);
   const [activeNote, setActiveNote] = useState<Note | null>(null);
   const [noteContent, setNoteContent] = useState("");
@@ -23,44 +23,27 @@ export function NotesView() {
     setNoteTitle(n.title);
   };
 
-  const handleNewNote = useCallback(() => {
-    const newNote: Note = {
-      id: `note-${Date.now()}`,
-      title: "Untitled Note",
-      proj: "AI SaaS Platform",
-      content: "",
-      proposed: 0,
-      pinned: false,
-      updated: "Just now",
-    };
-    setNotes((prev) => [newNote, ...prev]);
-    openNote(newNote);
-  }, []);
+  const handleNewNote = useCallback(async () => {
+    const newNote = await createNote("Untitled Note", "", "");
+    if (newNote) openNote(newNote);
+  }, [createNote]);
 
   const handleSave = useCallback(() => {
     if (!activeNote) return;
-    setNotes((prev) =>
-      prev.map((n) =>
-        n.id === activeNote.id
-          ? { ...n, title: noteTitle, content: noteContent, updated: "Just now" }
-          : n
-      )
-    );
+    updateNote(activeNote.id, { title: noteTitle, content: noteContent });
     setActiveNote((prev) =>
       prev ? { ...prev, title: noteTitle, content: noteContent, updated: "Just now" } : null
     );
-  }, [activeNote, noteTitle, noteContent]);
+  }, [activeNote, noteTitle, noteContent, updateNote]);
 
   const handlePinToggle = useCallback(
     (noteId: string) => {
-      setNotes((prev) =>
-        prev.map((n) => (n.id === noteId ? { ...n, pinned: !n.pinned } : n))
-      );
+      togglePin(noteId);
       if (activeNote?.id === noteId) {
         setActiveNote((prev) => (prev ? { ...prev, pinned: !prev.pinned } : null));
       }
     },
-    [activeNote]
+    [activeNote, togglePin]
   );
 
   // Editor view

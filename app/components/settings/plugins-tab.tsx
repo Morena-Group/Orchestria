@@ -44,6 +44,7 @@ export function PluginsTab() {
               </div>
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 <button
+                  onClick={() => console.log("Sync plugin:", p.id)}
                   className="p-2 rounded-lg transition-colors hover:bg-white/5"
                   title="Sync Now"
                   style={{ color: "var(--color-text-secondary)" }}
@@ -51,6 +52,7 @@ export function PluginsTab() {
                   <RefreshCw size={14} />
                 </button>
                 <button
+                  onClick={() => console.log("Configure plugin:", p.id)}
                   className="p-2 rounded-lg transition-colors hover:bg-white/5"
                   title="Configure"
                   style={{ color: "var(--color-text-secondary)" }}
@@ -58,6 +60,7 @@ export function PluginsTab() {
                   <Settings size={14} />
                 </button>
                 <button
+                  onClick={() => console.log("Disconnect plugin:", p.id)}
                   className="p-2 rounded-lg transition-colors hover:bg-white/5"
                   title="Disconnect"
                   style={{ color: "var(--color-error)" }}
@@ -97,7 +100,7 @@ export function PluginsTab() {
                 </div>
               </div>
               <p className="text-[10px] mb-3" style={{ color: "var(--color-text-secondary)" }}>{p.desc}</p>
-              <Button className="w-full justify-center">
+              <Button className="w-full justify-center" onClick={() => console.log("Install plugin:", p.id)}>
                 <Download size={12} /> Install
               </Button>
             </div>

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { PYRAMID, PLANS, PLAN_TEMPLATES, PLAN_CHATS } from "@/lib/data/planner";
+import type { PlanNode, PlanChat } from "@/lib/types";
+import { PYRAMID as INITIAL_PYRAMID, PLANS, PLAN_TEMPLATES, PLAN_CHATS } from "@/lib/data/planner";
 import { WORKERS } from "@/lib/data/workers";
 import { createFilterFn } from "@/lib/utils/planner";
 import { PlannerToolbar } from "./planner-toolbar";
@@ -16,6 +17,10 @@ import { BulkActionBar } from "./bulk-action-bar";
 import { Plus } from "lucide-react";
 
 export function PlannerView() {
+  // Data state
+  const [nodes, setNodes] = useState<PlanNode[]>(INITIAL_PYRAMID);
+  const [chatMessages, setChatMessages] = useState<PlanChat[]>(PLAN_CHATS);
+
   // Selection & navigation
   const [selected, setSelected] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({
@@ -52,8 +57,80 @@ export function PlannerView() {
   // Derived
   const hasFilter = filterWorker !== "all" || filterStatus !== "all" || filterAct !== "all";
   const filterDimmed = createFilterFn(filterWorker, filterStatus, filterAct);
-  const selNode = PYRAMID.find((n) => n.id === selected) ?? null;
-  const roots = PYRAMID.filter((n) => n.level === 0);
+  const selNode = nodes.find((n) => n.id === selected) ?? null;
+  const roots = nodes.filter((n) => n.level === 0);
+
+  // Node CRUD handlers
+  const handleNodeUpdate = useCallback((nodeId: string, updates: Partial<PlanNode>) => {
+    setNodes((prev) => prev.map((n) => (n.id === nodeId ? { ...n, ...updates } : n)));
+    if (selected === nodeId) {
+      setSelected(nodeId); // Re-trigger derived selNode
+    }
+  }, [selected]);
+
+  const handleNodeDelete = useCallback((nodeId: string) => {
+    setNodes((prev) => {
+      // Remove node and references from parents
+      const filtered = prev.filter((n) => n.id !== nodeId);
+      return filtered.map((n) => ({
+        ...n,
+        children: n.children.filter((c) => c !== nodeId),
+      }));
+    });
+    if (selected === nodeId) setSelected(null);
+  }, [selected]);
+
+  const handleAddPhase = useCallback(() => {
+    const newId = `r${Date.now()}`;
+    const newNode: PlanNode = {
+      id: newId,
+      level: 0,
+      label: "New Phase",
+      status: "draft",
+      priority: "medium",
+      worker: null,
+      act: null,
+      review: "Orchestrator decides",
+      tags: [],
+      children: [],
+      description: "New phase — click to edit",
+    };
+    setNodes((prev) => [...prev, newNode]);
+    setSelected(newId);
+    setExpanded((prev) => ({ ...prev, [newId]: true }));
+  }, []);
+
+  const handleChatSend = useCallback(() => {
+    const text = chatInput.trim();
+    if (!text) return;
+    const userMsg: PlanChat = { role: "user", content: text, time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) };
+    setChatMessages((prev) => [...prev, userMsg]);
+    setChatInput("");
+    setTimeout(() => {
+      const botMsg: PlanChat = {
+        role: "bot",
+        content: "I've noted your request. Let me adjust the plan accordingly.",
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setChatMessages((prev) => [...prev, botMsg]);
+    }, 1000);
+  }, [chatInput]);
+
+  const handleBulkAction = useCallback((action: string, value: string) => {
+    if (action === "delete") {
+      setNodes((prev) => {
+        const filtered = prev.filter((n) => !selectedNodes.includes(n.id));
+        return filtered.map((n) => ({
+          ...n,
+          children: n.children.filter((c) => !selectedNodes.includes(c)),
+        }));
+      });
+      setSelectedNodes([]);
+      setSelectMode(false);
+    } else {
+      console.log("Bulk action:", action, value, "on nodes:", selectedNodes);
+    }
+  }, [selectedNodes]);
 
   const toggleExp = useCallback(
     (id: string) => setExpanded((p) => ({ ...p, [id]: !p[id] })),
@@ -89,7 +166,7 @@ export function PlannerView() {
       <PlannerToolbar
         activePlan={activePlan}
         onActivePlanChange={setActivePlan}
-        nodeCount={PYRAMID.length}
+        nodeCount={nodes.length}
         showTemplates={showTemplates}
         onToggleTemplates={() => setShowTemplates((p) => !p)}
         showFilter={showFilter}
@@ -144,7 +221,7 @@ export function PlannerView() {
             <PyramidNode
               key={root.id}
               node={root}
-              allNodes={PYRAMID}
+              allNodes={nodes}
               selected={selected}
               onSelect={setSelected}
               expanded={expanded}
@@ -157,6 +234,7 @@ export function PlannerView() {
           ))}
           <div className="flex justify-center mt-6">
             <button
+              onClick={handleAddPhase}
               className="px-4 py-2 rounded-xl border border-dashed flex items-center gap-2 transition-colors hover:border-accent"
               style={{
                 borderColor: "var(--color-border-default)",
@@ -177,6 +255,7 @@ export function PlannerView() {
               setSelectMode(false);
               setSelectedNodes([]);
             }}
+            onBulkAction={handleBulkAction}
           />
         )}
 
@@ -199,16 +278,20 @@ export function PlannerView() {
             {selNode && !showChat && (
               <DetailPanel
                 node={selNode}
-                allNodes={PYRAMID}
+                allNodes={nodes}
                 onSelectNode={setSelected}
                 onClose={() => setSelected(null)}
+                onSave={(nodeId, updates) => handleNodeUpdate(nodeId, updates)}
+                onDelete={(nodeId) => handleNodeDelete(nodeId)}
               />
             )}
 
             {showChat && (
               <ChatPanel
+                messages={chatMessages}
                 chatInput={chatInput}
                 onChatInputChange={setChatInput}
+                onSend={handleChatSend}
                 contextLabel={selNode?.label ?? null}
                 showCloseButton={!selNode}
                 onClose={() => setShowChat(false)}

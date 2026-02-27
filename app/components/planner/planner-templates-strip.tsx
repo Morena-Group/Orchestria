@@ -20,6 +20,7 @@ export function PlannerTemplatesStrip() {
       {PLAN_TEMPLATES.map((t) => (
         <button
           key={t.id}
+          onClick={() => console.log("Select template:", t.id, t.name)}
           className="flex items-center gap-2 px-3 py-2 rounded-xl border whitespace-nowrap flex-shrink-0 transition-colors hover:border-accent"
           style={{
             borderColor: "var(--color-border-default)",

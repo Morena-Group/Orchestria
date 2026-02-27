@@ -13,6 +13,7 @@ import { WORKERS } from "@/lib/data/workers";
 import { PROJECTS } from "@/lib/data/projects";
 import { ST } from "@/lib/constants/status";
 import { PRI } from "@/lib/constants/status";
+import { useProjectContext } from "@/lib/context/project-context";
 
 interface PaletteItem {
   id: string;
@@ -89,6 +90,7 @@ interface CommandPaletteProps {
 
 export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const router = useRouter();
+  const { setActiveProjectId } = useProjectContext();
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState("all");
   const [sel, setSel] = useState(0);
@@ -105,6 +107,15 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   });
 
   const runItem = (item: PaletteItem) => {
+    // Handle project switching
+    if (item.cat === "project") {
+      const projId = item.id.replace("proj-", "");
+      setActiveProjectId(projId);
+    }
+    // Log action items
+    if (item.cat === "action") {
+      console.log("Command palette action:", item.label);
+    }
     router.push(item.href);
     onClose();
     setQuery("");

@@ -2,14 +2,17 @@
 
 import { useState } from "react";
 import { Plus, Bot } from "lucide-react";
+import type { Worker } from "@/lib/types";
 import { WORKERS } from "@/lib/data/workers";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { WorkerCard } from "@/components/workers/worker-card";
 import { AddWorkerModal } from "@/components/workers/add-worker-modal";
+import { WorkerDetailModal } from "@/components/workers/worker-detail-modal";
 
 export default function WorkersPage() {
   const [showModal, setShowModal] = useState(false);
+  const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
@@ -37,12 +40,13 @@ export default function WorkersPage() {
           style={{ gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))" }}
         >
           {WORKERS.map((w) => (
-            <WorkerCard key={w.id} worker={w} />
+            <WorkerCard key={w.id} worker={w} onClick={() => setSelectedWorker(w)} />
           ))}
         </div>
       )}
 
       <AddWorkerModal open={showModal} onClose={() => setShowModal(false)} />
+      <WorkerDetailModal worker={selectedWorker} onClose={() => setSelectedWorker(null)} />
     </div>
   );
 }

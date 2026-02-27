@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, ListTodo, Bot, MessageSquare, Workflow,
   FileText, BarChart3, HardDrive, Settings, Zap,
@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { PROJECTS } from "@/lib/data/projects";
 import { INSTALLED_PLUGINS } from "@/lib/data/plugins";
+import { useProjectContext } from "@/lib/context/project-context";
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -25,11 +26,10 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { activeProjectId, setActiveProjectId } = useProjectContext();
   const [collapsed, setCollapsed] = useState(false);
   const [projectsExpanded, setProjectsExpanded] = useState(true);
-
-  // Determine active project from state (default p1 for now)
-  const activeProject = "p1";
 
   return (
     <div
@@ -131,28 +131,34 @@ export function Sidebar() {
             </button>
             {projectsExpanded &&
               PROJECTS.map((p) => (
-                <Link
+                <button
                   key={p.id}
-                  href="/dashboard"
-                  className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md mb-0.5 transition-all duration-150"
+                  onClick={() => {
+                    setActiveProjectId(p.id);
+                    router.push("/dashboard");
+                  }}
+                  className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md mb-0.5 transition-all duration-150 text-left"
                   style={{
-                    color: activeProject === p.id ? "#ededef" : "#a1a1aa",
-                    backgroundColor: activeProject === p.id ? "#1c1f2e" : "transparent",
+                    color: activeProjectId === p.id ? "#ededef" : "#a1a1aa",
+                    backgroundColor: activeProjectId === p.id ? "#1c1f2e" : "transparent",
                   }}
                 >
                   <div
                     className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
                     style={{
-                      backgroundColor: activeProject === p.id ? "#c9a96e" : "#52525b",
+                      backgroundColor: activeProjectId === p.id ? "#c9a96e" : "#52525b",
                     }}
                   />
                   <span className="truncate">{p.name}</span>
                   <span className="ml-auto text-[11px] text-text-muted">
                     {p.done}/{p.total}
                   </span>
-                </Link>
+                </button>
               ))}
-            <button className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md mt-1 text-text-muted">
+            <button
+              onClick={() => console.log("New Project clicked")}
+              className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md mt-1 text-text-muted"
+            >
               <Plus size={14} /> New Project
             </button>
           </div>

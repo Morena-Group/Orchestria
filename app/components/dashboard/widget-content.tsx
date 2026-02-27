@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   CheckCircle2, Plus, Edit3, AlertTriangle,
 } from "lucide-react";
@@ -185,33 +186,11 @@ export function WidgetContent({ id }: WidgetContentProps) {
   }
 
   if (id === "quick-task") {
-    return (
-      <div className="space-y-2">
-        <Input placeholder="Task title..." />
-        <div className="flex gap-2">
-          <Select>
-            <option>Medium</option>
-            <option>Urgent</option>
-            <option>High</option>
-            <option>Low</option>
-          </Select>
-          <Button primary><Plus size={14} /> Add</Button>
-        </div>
-      </div>
-    );
+    return <QuickTaskWidget />;
   }
 
   if (id === "quick-note") {
-    return (
-      <div>
-        <textarea
-          className="w-full px-3 py-2 rounded-lg text-sm outline-none resize-none glass-input text-text-primary placeholder:text-text-muted"
-          rows={2}
-          placeholder="Jot something down..."
-        />
-        <Button primary className="mt-2"><Edit3 size={14} /> Save Note</Button>
-      </div>
-    );
+    return <QuickNoteWidget />;
   }
 
   if (id === "chat-preview") {
@@ -263,4 +242,59 @@ export function WidgetContent({ id }: WidgetContentProps) {
   }
 
   return <span className="text-xs text-text-muted">Widget content</span>;
+}
+
+function QuickTaskWidget() {
+  const [title, setTitle] = useState("");
+  const [priority, setPriority] = useState("medium");
+
+  function handleAdd() {
+    if (!title.trim()) return;
+    console.log("Quick task added:", { title: title.trim(), priority });
+    setTitle("");
+    setPriority("medium");
+  }
+
+  return (
+    <div className="space-y-2">
+      <Input
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }}
+        placeholder="Task title..."
+      />
+      <div className="flex gap-2">
+        <Select value={priority} onChange={(e) => setPriority(e.target.value)}>
+          <option value="medium">Medium</option>
+          <option value="urgent">Urgent</option>
+          <option value="high">High</option>
+          <option value="low">Low</option>
+        </Select>
+        <Button primary onClick={handleAdd}><Plus size={14} /> Add</Button>
+      </div>
+    </div>
+  );
+}
+
+function QuickNoteWidget() {
+  const [text, setText] = useState("");
+
+  function handleSave() {
+    if (!text.trim()) return;
+    console.log("Quick note saved:", text.trim());
+    setText("");
+  }
+
+  return (
+    <div>
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        className="w-full px-3 py-2 rounded-lg text-sm outline-none resize-none glass-input text-text-primary placeholder:text-text-muted"
+        rows={2}
+        placeholder="Jot something down..."
+      />
+      <Button primary className="mt-2" onClick={handleSave}><Edit3 size={14} /> Save Note</Button>
+    </div>
+  );
 }

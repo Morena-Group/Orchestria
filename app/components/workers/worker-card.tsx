@@ -8,11 +8,15 @@ import { Badge } from "@/components/ui/badge";
 
 interface WorkerCardProps {
   worker: Worker;
+  onClick?: () => void;
 }
 
-export function WorkerCard({ worker }: WorkerCardProps) {
+export function WorkerCard({ worker, onClick }: WorkerCardProps) {
   return (
-    <div className="p-4 rounded-xl glass-card hover:border-[rgba(200,169,110,0.25)] transition-colors duration-150">
+    <div
+      onClick={onClick}
+      className="p-4 rounded-xl glass-card hover:border-[rgba(200,169,110,0.25)] transition-colors duration-150 cursor-pointer"
+    >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
           <Avatar type={worker.type} size={40} role={worker.role} />

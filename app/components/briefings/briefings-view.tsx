@@ -45,6 +45,7 @@ export function BriefingsView() {
   const [showAdd, setShowAdd] = useState(false);
   const [period, setPeriod] = useState("24h");
   const [scope, setScope] = useState("all");
+  const [generated, setGenerated] = useState<string | null>(null);
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
@@ -57,13 +58,25 @@ export function BriefingsView() {
           Briefings
         </h2>
         <div className="flex gap-2">
-          <Button>
+          {generated && (
+            <span className="text-[10px] self-center text-text-muted">
+              Generated {generated}
+            </span>
+          )}
+          <Button onClick={() => console.log("Save briefing template")}>
             <Save size={12} /> Save Template
           </Button>
-          <Button>
+          <Button onClick={() => console.log("Export briefing PDF")}>
             <Download size={12} /> Export PDF
           </Button>
-          <Button primary>
+          <Button
+            primary
+            onClick={() =>
+              setGenerated(
+                new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+              )
+            }
+          >
             <Sparkles size={12} /> Generate
           </Button>
         </div>
@@ -71,7 +84,7 @@ export function BriefingsView() {
 
       {/* Scope + period filters */}
       <div className="flex items-center gap-2 mb-4">
-        {["all", "p1", "p2", "p3"].map((s) => (
+        {["all", ...PROJECTS.map((p) => p.id)].map((s) => (
           <button
             key={s}
             onClick={() => setScope(s)}

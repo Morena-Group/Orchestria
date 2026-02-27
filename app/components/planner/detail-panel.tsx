@@ -1,9 +1,9 @@
 "use client";
 
-import type { PlanNode } from "@/lib/types";
+import { useState, useEffect } from "react";
+import type { PlanNode, ActivityType } from "@/lib/types";
 import { ST, ACT } from "@/lib/constants/status";
 import { WORKERS } from "@/lib/data/workers";
-import { PYRAMID } from "@/lib/data/planner";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -15,6 +15,8 @@ interface DetailPanelProps {
   allNodes: PlanNode[];
   onSelectNode: (id: string | null) => void;
   onClose: () => void;
+  onSave: (nodeId: string, updates: Partial<PlanNode>) => void;
+  onDelete: (nodeId: string) => void;
 }
 
 export function DetailPanel({
@@ -22,7 +24,23 @@ export function DetailPanel({
   allNodes,
   onSelectNode,
   onClose,
+  onSave,
+  onDelete,
 }: DetailPanelProps) {
+  const [status, setStatus] = useState(node.status);
+  const [priority, setPriority] = useState(node.priority);
+  const [activity, setActivity] = useState(node.act ?? "none");
+  const [worker, setWorker] = useState(node.worker ?? "auto");
+  const [review, setReview] = useState(node.review);
+
+  // Reset local state when node changes
+  useEffect(() => {
+    setStatus(node.status);
+    setPriority(node.priority);
+    setActivity(node.act ?? "none");
+    setWorker(node.worker ?? "auto");
+    setReview(node.review);
+  }, [node.id, node.status, node.priority, node.act, node.worker, node.review]);
   const children = allNodes.filter((n) => node.children.includes(n.id));
   const parents = allNodes.filter((n) => n.children.includes(node.id));
 
@@ -52,7 +70,7 @@ export function DetailPanel({
       <div className="space-y-3">
         <div>
           <Label>Status</Label>
-          <Select defaultValue={node.status}>
+          <Select value={status} onChange={(e) => setStatus(e.target.value as PlanNode["status"])}>
             <option value="draft">Draft</option>
             <option value="pending">Pending</option>
             <option value="approved">Approved</option>
@@ -65,7 +83,7 @@ export function DetailPanel({
 
         <div>
           <Label>Priority</Label>
-          <Select defaultValue={node.priority}>
+          <Select value={priority} onChange={(e) => setPriority(e.target.value as PlanNode["priority"])}>
             <option value="urgent">Urgent</option>
             <option value="high">High</option>
             <option value="medium">Medium</option>
@@ -75,7 +93,7 @@ export function DetailPanel({
 
         <div>
           <Label>Activity</Label>
-          <Select defaultValue={node.act ?? "none"}>
+          <Select value={activity} onChange={(e) => setActivity(e.target.value)}>
             <option value="none">None</option>
             {Object.entries(ACT).map(([k, v]) => (
               <option key={k} value={k}>
@@ -87,7 +105,7 @@ export function DetailPanel({
 
         <div>
           <Label>Worker</Label>
-          <Select defaultValue={node.worker ?? "auto"}>
+          <Select value={worker} onChange={(e) => setWorker(e.target.value)}>
             <option value="auto">Auto (Orchestrator)</option>
             {WORKERS.map((w) => (
               <option key={w.id} value={w.id}>
@@ -99,7 +117,7 @@ export function DetailPanel({
 
         <div>
           <Label>Review By</Label>
-          <Select defaultValue={node.review}>
+          <Select value={review} onChange={(e) => setReview(e.target.value)}>
             <option>Orchestrator decides</option>
             <option>Orchestrator review</option>
             <option>Human Review</option>
@@ -126,6 +144,7 @@ export function DetailPanel({
               </span>
             ))}
             <button
+              onClick={() => console.log("Add tag to node:", node.id)}
               className="px-1.5 py-0.5 rounded text-[10px] border border-dashed"
               style={{
                 borderColor: "var(--color-border-default)",
@@ -223,10 +242,22 @@ export function DetailPanel({
         className="flex gap-2 mt-4 pt-4 border-t"
         style={{ borderColor: "var(--color-border-default)" }}
       >
-        <Button primary>
+        <Button
+          primary
+          onClick={() =>
+            onSave(node.id, {
+              status,
+              priority,
+              act: activity === "none" ? null : activity as ActivityType,
+              worker: worker === "auto" ? null : worker,
+              review,
+            })
+          }
+        >
           <Check size={12} /> Save
         </Button>
         <button
+          onClick={() => onDelete(node.id)}
           className="p-2 rounded hover:bg-white/5"
           title="Delete"
         >

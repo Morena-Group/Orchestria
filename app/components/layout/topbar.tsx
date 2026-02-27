@@ -10,6 +10,7 @@ import type { LucideIcon } from "lucide-react";
 import { PROJECTS } from "@/lib/data/projects";
 import { NOTIFICATIONS as INITIAL_NOTIFICATIONS } from "@/lib/data/notifications";
 import { INSTALLED_PLUGINS } from "@/lib/data/plugins";
+import { useProjectContext } from "@/lib/context/project-context";
 
 const NOTIF_ICONS: Record<string, LucideIcon> = {
   CheckCircle2,
@@ -36,6 +37,7 @@ interface TopBarProps {
 
 export function TopBar({ onOpenCmd }: TopBarProps) {
   const pathname = usePathname();
+  const { activeProjectId } = useProjectContext();
   const [showNotif, setShowNotif] = useState(false);
   const [notifs, setNotifs] = useState(INITIAL_NOTIFICATIONS);
   const unread = notifs.filter((n) => !n.read).length;
@@ -47,8 +49,8 @@ export function TopBar({ onOpenCmd }: TopBarProps) {
     : null;
   const label = pluginLabel || LABELS[pathname] || "Dashboard";
 
-  // Active project (default for now)
-  const project = PROJECTS[0];
+  // Active project from context
+  const project = PROJECTS.find((p) => p.id === activeProjectId);
 
   const markAllRead = () => setNotifs((ns) => ns.map((n) => ({ ...n, read: true })));
   const markRead = (id: string) =>

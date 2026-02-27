@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Plus, Send, Paperclip, Database, FileText, X, MessageSquare,
 } from "lucide-react";
+import type { ChatMessage } from "@/lib/types";
 import { CHATS } from "@/lib/data/chats";
 import { INSTALLED_PLUGINS } from "@/lib/data/plugins";
 import { Avatar } from "@/components/ui/avatar";
@@ -15,16 +16,67 @@ const CHAT_LIST = [
 
 const CONTEXT_FILES = ["memory.md", "project-overview.md", "db-schema.md"];
 
+const BOT_REPLIES = [
+  "I'll look into that. Let me analyze the relevant context and get back to you with a plan.",
+  "Great question! Based on the current project state, I'd recommend breaking this into smaller tasks first.",
+  "Done! I've processed your request. Would you like me to create tasks from this?",
+  "I can see a few options here. Let me outline the trade-offs for each approach.",
+  "Understood. I'll coordinate with the available workers and update you on progress.",
+];
+
 export default function ChatPage() {
+  const [messages, setMessages] = useState<ChatMessage[]>(CHATS);
   const [input, setInput] = useState("");
   const [showCtx, setShowCtx] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
+
+  function handleSend() {
+    const text = input.trim();
+    if (!text) return;
+
+    const userMsg: ChatMessage = {
+      id: `m${Date.now()}`,
+      role: "user",
+      content: text,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+    setMessages((prev) => [...prev, userMsg]);
+    setInput("");
+
+    // Mock bot reply after 1s
+    setTimeout(() => {
+      const reply: ChatMessage = {
+        id: `m${Date.now() + 1}`,
+        role: "bot",
+        content: BOT_REPLIES[Math.floor(Math.random() * BOT_REPLIES.length)],
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setMessages((prev) => [...prev, reply]);
+    }, 1000);
+  }
+
+  function handleNewChat() {
+    setMessages([]);
+    setInput("");
+  }
 
   return (
     <div className="flex-1 flex overflow-hidden">
       {/* Chat list sidebar */}
       <div className="w-56 border-r border-border-default flex flex-col bg-bg-surface">
         <div className="p-3 border-b border-border-default">
-          <button className="w-full px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-1 bg-accent text-accent-fg">
+          <button
+            onClick={handleNewChat}
+            className="w-full px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-1 bg-accent text-accent-fg"
+          >
             <Plus size={14} /> New Chat
           </button>
         </div>
@@ -73,7 +125,7 @@ export default function ChatPage() {
           {/* Messages */}
           <div className="flex-1 flex flex-col">
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              {CHATS.length === 0 ? (
+              {messages.length === 0 ? (
                 <div className="flex-1 flex items-center justify-center h-full">
                   <div className="text-center max-w-xs">
                     <div
@@ -91,30 +143,33 @@ export default function ChatPage() {
                   </div>
                 </div>
               ) : (
-                CHATS.map((m) => (
-                  <div
-                    key={m.id}
-                    className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} gap-2`}
-                  >
-                    {m.role !== "user" && (
-                      <Avatar type="claude-cli" size={28} role="orchestrator" />
-                    )}
-                    <div className="max-w-[70%]">
-                      <div
-                        className="p-3 rounded-xl text-sm"
-                        style={{
-                          backgroundColor:
-                            m.role === "user"
-                              ? "rgba(201,169,110,0.13)"
-                              : "var(--color-bg-card)",
-                          color: "var(--color-text-primary)",
-                        }}
-                      >
-                        <p className="whitespace-pre-wrap">{m.content}</p>
+                <>
+                  {messages.map((m) => (
+                    <div
+                      key={m.id}
+                      className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} gap-2`}
+                    >
+                      {m.role !== "user" && (
+                        <Avatar type="claude-cli" size={28} role="orchestrator" />
+                      )}
+                      <div className="max-w-[70%]">
+                        <div
+                          className="p-3 rounded-xl text-sm"
+                          style={{
+                            backgroundColor:
+                              m.role === "user"
+                                ? "rgba(201,169,110,0.13)"
+                                : "var(--color-bg-card)",
+                            color: "var(--color-text-primary)",
+                          }}
+                        >
+                          <p className="whitespace-pre-wrap">{m.content}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  ))}
+                  <div ref={messagesEndRef} />
+                </>
               )}
             </div>
 
@@ -124,6 +179,12 @@ export default function ChatPage() {
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
                   placeholder="Ask the orchestrator..."
                   className="w-full bg-transparent text-sm outline-none resize-none text-text-primary placeholder:text-text-muted"
                   style={{ minHeight: 40 }}
@@ -133,7 +194,10 @@ export default function ChatPage() {
                   <button className="p-1 rounded hover:bg-white/5 text-text-muted">
                     <Paperclip size={14} />
                   </button>
-                  <button className="p-1.5 rounded-lg bg-accent text-accent-fg">
+                  <button
+                    onClick={handleSend}
+                    className="p-1.5 rounded-lg bg-accent text-accent-fg"
+                  >
                     <Send size={14} />
                   </button>
                 </div>

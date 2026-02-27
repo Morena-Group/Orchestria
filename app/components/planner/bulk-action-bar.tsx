@@ -7,9 +7,10 @@ import { Trash2, X } from "lucide-react";
 interface BulkActionBarProps {
   selectedCount: number;
   onClose: () => void;
+  onBulkAction?: (action: string, value: string) => void;
 }
 
-export function BulkActionBar({ selectedCount, onClose }: BulkActionBarProps) {
+export function BulkActionBar({ selectedCount, onClose, onBulkAction }: BulkActionBarProps) {
   return (
     <div
       className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 px-5 py-3 rounded-xl border z-30"
@@ -28,32 +29,45 @@ export function BulkActionBar({ selectedCount, onClose }: BulkActionBarProps) {
 
       <select
         className="glass-input px-2 py-1 rounded text-xs outline-none"
+        onChange={(e) => {
+          if (e.target.value) onBulkAction?.("worker", e.target.value);
+          e.target.value = "";
+        }}
       >
-        <option>Set Worker...</option>
+        <option value="">Set Worker...</option>
         {WORKERS.map((w) => (
-          <option key={w.id}>{w.name}</option>
+          <option key={w.id} value={w.id}>{w.name}</option>
         ))}
       </select>
 
       <select
         className="glass-input px-2 py-1 rounded text-xs outline-none"
+        onChange={(e) => {
+          if (e.target.value) onBulkAction?.("status", e.target.value);
+          e.target.value = "";
+        }}
       >
-        <option>Set Status...</option>
+        <option value="">Set Status...</option>
         {Object.entries(ST).map(([k, v]) => (
-          <option key={k}>{v.l}</option>
+          <option key={k} value={k}>{v.l}</option>
         ))}
       </select>
 
       <select
         className="glass-input px-2 py-1 rounded text-xs outline-none"
+        onChange={(e) => {
+          if (e.target.value) onBulkAction?.("activity", e.target.value);
+          e.target.value = "";
+        }}
       >
-        <option>Set Activity...</option>
+        <option value="">Set Activity...</option>
         {Object.entries(ACT).map(([k, v]) => (
-          <option key={k}>{v.l}</option>
+          <option key={k} value={k}>{v.l}</option>
         ))}
       </select>
 
       <button
+        onClick={() => onBulkAction?.("delete", "")}
         className="p-1.5 rounded hover:bg-white/5"
         title="Delete selected"
       >

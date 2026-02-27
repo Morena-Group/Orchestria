@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import type { Note } from "@/lib/types";
 import { NOTES_DATA } from "@/lib/data/notes";
 import { Button } from "@/components/ui/button";
@@ -11,25 +11,73 @@ import { CondenseBanner } from "./condense-banner";
 import { FileText, Plus, Shrink } from "lucide-react";
 
 export function NotesView() {
+  const [notes, setNotes] = useState<Note[]>(NOTES_DATA);
   const [condense, setCondense] = useState(false);
   const [activeNote, setActiveNote] = useState<Note | null>(null);
   const [noteContent, setNoteContent] = useState("");
+  const [noteTitle, setNoteTitle] = useState("");
 
   const openNote = (n: Note) => {
     setActiveNote(n);
     setNoteContent(n.content);
+    setNoteTitle(n.title);
   };
+
+  const handleNewNote = useCallback(() => {
+    const newNote: Note = {
+      id: `note-${Date.now()}`,
+      title: "Untitled Note",
+      proj: "AI SaaS Platform",
+      content: "",
+      proposed: 0,
+      pinned: false,
+      updated: "Just now",
+    };
+    setNotes((prev) => [newNote, ...prev]);
+    openNote(newNote);
+  }, []);
+
+  const handleSave = useCallback(() => {
+    if (!activeNote) return;
+    setNotes((prev) =>
+      prev.map((n) =>
+        n.id === activeNote.id
+          ? { ...n, title: noteTitle, content: noteContent, updated: "Just now" }
+          : n
+      )
+    );
+    setActiveNote((prev) =>
+      prev ? { ...prev, title: noteTitle, content: noteContent, updated: "Just now" } : null
+    );
+  }, [activeNote, noteTitle, noteContent]);
+
+  const handlePinToggle = useCallback(
+    (noteId: string) => {
+      setNotes((prev) =>
+        prev.map((n) => (n.id === noteId ? { ...n, pinned: !n.pinned } : n))
+      );
+      if (activeNote?.id === noteId) {
+        setActiveNote((prev) => (prev ? { ...prev, pinned: !prev.pinned } : null));
+      }
+    },
+    [activeNote]
+  );
 
   // Editor view
   if (activeNote) {
     return (
       <NoteEditor
-        notes={NOTES_DATA}
+        notes={notes}
         activeNote={activeNote}
         noteContent={noteContent}
+        noteTitle={noteTitle}
         onNoteContentChange={setNoteContent}
+        onNoteTitleChange={setNoteTitle}
         onOpenNote={openNote}
         onBack={() => setActiveNote(null)}
+        onSave={handleSave}
+        onPinToggle={handlePinToggle}
+        onNewNote={handleNewNote}
       />
     );
   }
@@ -48,7 +96,7 @@ export function NotesView() {
           <Button onClick={() => setCondense((p) => !p)}>
             <Shrink size={14} /> Condense
           </Button>
-          <Button primary>
+          <Button primary onClick={handleNewNote}>
             <Plus size={16} /> New Note
           </Button>
         </div>
@@ -56,12 +104,13 @@ export function NotesView() {
 
       {condense && <CondenseBanner />}
 
-      {NOTES_DATA.length === 0 ? (
+      {notes.length === 0 ? (
         <EmptyState
           icon={FileText}
           title="No notes yet"
           desc="Capture ideas, decisions, and context. The AI can propose tasks from your notes or condense them by theme."
           action="Create First Note"
+          onAction={handleNewNote}
         />
       ) : (
         <div
@@ -70,8 +119,13 @@ export function NotesView() {
             gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
           }}
         >
-          {NOTES_DATA.map((n) => (
-            <NoteCard key={n.id} note={n} onClick={() => openNote(n)} />
+          {notes.map((n) => (
+            <NoteCard
+              key={n.id}
+              note={n}
+              onClick={() => openNote(n)}
+              onPin={() => handlePinToggle(n.id)}
+            />
           ))}
         </div>
       )}

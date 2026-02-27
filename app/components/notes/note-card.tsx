@@ -7,6 +7,7 @@ import { Pin, Sparkles } from "lucide-react";
 interface NoteCardProps {
   note: Note;
   onClick: () => void;
+  onPin?: () => void;
 }
 
 function getPreview(content: string): string {
@@ -17,7 +18,7 @@ function getPreview(content: string): string {
     .join(" ");
 }
 
-export function NoteCard({ note, onClick }: NoteCardProps) {
+export function NoteCard({ note, onClick, onPin }: NoteCardProps) {
   return (
     <div
       onClick={onClick}
@@ -34,15 +35,23 @@ export function NoteCard({ note, onClick }: NoteCardProps) {
         >
           {note.title}
         </h3>
-        {!note.pinned && (
-          <button
-            className="p-1 rounded hover:bg-white/5"
-            title="Pin"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Pin size={12} style={{ color: "var(--color-text-muted)" }} />
-          </button>
-        )}
+        <button
+          className="p-1 rounded hover:bg-white/5"
+          title={note.pinned ? "Unpin" : "Pin"}
+          onClick={(e) => {
+            e.stopPropagation();
+            onPin?.();
+          }}
+        >
+          <Pin
+            size={12}
+            style={{
+              color: note.pinned
+                ? "var(--color-accent)"
+                : "var(--color-text-muted)",
+            }}
+          />
+        </button>
       </div>
 
       {/* Project badge */}
@@ -74,7 +83,10 @@ export function NoteCard({ note, onClick }: NoteCardProps) {
               borderColor: "var(--color-border-default)",
               color: "var(--color-accent-hover)",
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              console.log("Propose Tasks from note:", note.id);
+            }}
           >
             <Sparkles size={12} /> Propose Tasks
           </button>

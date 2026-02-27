@@ -12,6 +12,7 @@ import { TaskCard } from "@/components/tasks/task-card";
 import { TaskListRow } from "@/components/tasks/task-list-row";
 import { NewTaskModal } from "@/components/tasks/new-task-modal";
 import { TaskModal } from "@/components/tasks/task-modal";
+import { useProjectContext } from "@/lib/context/project-context";
 
 export default function TasksPage() {
   const [showNew, setShowNew] = useState(false);
@@ -19,13 +20,14 @@ export default function TasksPage() {
   const [sortBy, setSortBy] = useState("status");
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
+  const { activeProjectId } = useProjectContext();
+
   function handleAction(taskId: string, actionId: string, comment?: string) {
     console.log("Task action:", { taskId, actionId, comment });
   }
 
-  // Filter to active project (p1 for now)
-  const proj = "p1";
-  const tasks = TASKS.filter((t) => t.pr === proj);
+  // Filter to active project
+  const tasks = TASKS.filter((t) => t.pr === activeProjectId);
 
   const sortedTasks = [...tasks].sort((a, b) => {
     if (sortBy === "status") return KANBAN_COLUMNS.indexOf(a.s) - KANBAN_COLUMNS.indexOf(b.s);

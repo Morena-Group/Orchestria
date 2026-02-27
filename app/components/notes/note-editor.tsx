@@ -9,18 +9,28 @@ interface NoteEditorProps {
   notes: Note[];
   activeNote: Note;
   noteContent: string;
+  noteTitle: string;
   onNoteContentChange: (content: string) => void;
+  onNoteTitleChange: (title: string) => void;
   onOpenNote: (note: Note) => void;
   onBack: () => void;
+  onSave: () => void;
+  onPinToggle: (noteId: string) => void;
+  onNewNote: () => void;
 }
 
 export function NoteEditor({
   notes,
   activeNote,
   noteContent,
+  noteTitle,
   onNoteContentChange,
+  onNoteTitleChange,
   onOpenNote,
   onBack,
+  onSave,
+  onPinToggle,
+  onNewNote,
 }: NoteEditorProps) {
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -51,7 +61,10 @@ export function NoteEditor({
           >
             Notes
           </span>
-          <button className="ml-auto p-1 rounded hover:bg-white/5">
+          <button
+            onClick={onNewNote}
+            className="ml-auto p-1 rounded hover:bg-white/5"
+          >
             <Plus
               size={16}
               style={{ color: "var(--color-text-secondary)" }}
@@ -110,7 +123,8 @@ export function NoteEditor({
               <Pin size={14} style={{ color: "var(--color-accent)" }} />
             )}
             <input
-              defaultValue={activeNote.title}
+              value={noteTitle}
+              onChange={(e) => onNoteTitleChange(e.target.value)}
               className="text-lg font-semibold bg-transparent outline-none"
               style={{ color: "var(--color-text-primary)" }}
             />
@@ -126,6 +140,7 @@ export function NoteEditor({
               Edited {activeNote.updated}
             </span>
             <button
+              onClick={() => onPinToggle(activeNote.id)}
               className="p-1.5 rounded hover:bg-white/5"
               title={activeNote.pinned ? "Unpin" : "Pin"}
             >
@@ -138,10 +153,10 @@ export function NoteEditor({
                 }}
               />
             </button>
-            <Button>
+            <Button onClick={() => console.log("Propose Tasks from note:", activeNote.id)}>
               <Sparkles size={12} /> Propose Tasks
             </Button>
-            <Button primary>
+            <Button primary onClick={onSave}>
               <Save size={12} /> Save
             </Button>
           </div>
@@ -173,6 +188,7 @@ export function NoteEditor({
             style={{ color: "var(--color-text-primary)" }}
           />
           <button
+            onClick={() => console.log("Generate AI content for note:", activeNote.id)}
             className="px-3 py-1.5 rounded-lg text-[10px] font-medium"
             style={{
               backgroundColor: "var(--color-accent)",

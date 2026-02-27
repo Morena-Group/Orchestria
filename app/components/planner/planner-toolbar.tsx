@@ -136,7 +136,7 @@ export function PlannerToolbar({
           </button>
         </div>
 
-        <Button>
+        <Button onClick={() => console.log("Undo")}>
           <RotateCcw size={12} /> Undo
         </Button>
 
@@ -152,11 +152,11 @@ export function PlannerToolbar({
           <MessageSquare size={12} /> Chat
         </Button>
 
-        <Button>
+        <Button onClick={() => console.log("Export plan")}>
           <Download size={12} /> Export
         </Button>
 
-        <Button primary>
+        <Button primary onClick={() => console.log("Launch plan")}>
           <Zap size={14} /> Launch
         </Button>
       </div>

@@ -1,20 +1,24 @@
 "use client";
 
-import { PLAN_CHATS } from "@/lib/data/planner";
+import type { PlanChat } from "@/lib/types";
 import { Avatar } from "@/components/ui/avatar";
 import { X, Target, Send } from "lucide-react";
 
 interface ChatPanelProps {
+  messages: PlanChat[];
   chatInput: string;
   onChatInputChange: (value: string) => void;
+  onSend: () => void;
   contextLabel: string | null;
   showCloseButton: boolean;
   onClose: () => void;
 }
 
 export function ChatPanel({
+  messages,
   chatInput,
   onChatInputChange,
+  onSend,
   contextLabel,
   showCloseButton,
   onClose,
@@ -63,7 +67,7 @@ export function ChatPanel({
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-3 space-y-3">
-        {PLAN_CHATS.map((m, i) => (
+        {messages.map((m, i) => (
           <div
             key={i}
             className={`flex ${
@@ -104,6 +108,12 @@ export function ChatPanel({
           <input
             value={chatInput}
             onChange={(e) => onChatInputChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                onSend();
+              }
+            }}
             placeholder={
               contextLabel
                 ? `Ask about "${contextLabel}"...`
@@ -112,6 +122,7 @@ export function ChatPanel({
             className="glass-input flex-1 px-3 py-2 rounded-lg text-xs outline-none"
           />
           <button
+            onClick={onSend}
             className="p-2 rounded-lg"
             style={{
               backgroundColor: "var(--color-accent)",

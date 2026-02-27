@@ -38,7 +38,7 @@ export default function DashboardPage() {
           <Button onClick={() => setShowCatalog(true)}>
             <Plus size={14} /> Add Widget
           </Button>
-          <Button>
+          <Button onClick={() => console.log("Export dashboard PDF")}>
             <Download size={14} /> Export PDF
           </Button>
         </div>

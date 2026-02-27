@@ -1,16 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Search, Bell, ChevronRight, CheckCircle2, AlertTriangle,
-  Eye, Workflow,
+  Eye, Workflow, LogOut, User,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { PROJECTS } from "@/lib/data/projects";
 import { NOTIFICATIONS as INITIAL_NOTIFICATIONS } from "@/lib/data/notifications";
 import { INSTALLED_PLUGINS } from "@/lib/data/plugins";
 import { useProjectContext } from "@/lib/context/project-context";
+import { createClient } from "@/lib/supabase/client";
 
 const NOTIF_ICONS: Record<string, LucideIcon> = {
   CheckCircle2,
@@ -37,10 +38,29 @@ interface TopBarProps {
 
 export function TopBar({ onOpenCmd }: TopBarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { activeProjectId } = useProjectContext();
   const [showNotif, setShowNotif] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const [notifs, setNotifs] = useState(INITIAL_NOTIFICATIONS);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const unread = notifs.filter((n) => !n.read).length;
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserEmail(user?.email ?? null);
+    });
+  }, []);
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  };
+
+  const userInitial = userEmail ? userEmail[0].toUpperCase() : "M";
 
   // Get label for current route
   const pluginMatch = pathname.match(/^\/plugins\/(.+)$/);
@@ -183,9 +203,40 @@ export function TopBar({ onOpenCmd }: TopBarProps) {
           )}
         </div>
 
-        {/* User avatar */}
-        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-bg-elevated text-text-secondary">
-          M
+        {/* User avatar + menu */}
+        <div className="relative">
+          <button
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-bg-elevated text-text-secondary hover:ring-1 hover:ring-accent/30 transition-all"
+          >
+            {userInitial}
+          </button>
+
+          {showUserMenu && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setShowUserMenu(false)}
+              />
+              <div className="absolute right-0 top-full mt-1 w-56 rounded-xl border border-border-default bg-bg-deep overflow-hidden z-50 shadow-[0_12px_40px_rgba(0,0,0,0.5)]">
+                <div className="px-4 py-3 border-b border-border-default">
+                  <div className="flex items-center gap-2">
+                    <User size={14} className="text-text-muted" />
+                    <span className="text-xs text-text-secondary truncate">
+                      {userEmail || "Not signed in"}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-text-secondary hover:bg-glass-hover transition-colors"
+                >
+                  <LogOut size={14} />
+                  Sign out
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

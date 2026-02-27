@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { getClient } from "@/lib/supabase/client";
 import { mapChat } from "@/lib/db/mappers";
+import { useRealtimeSubscription } from "./use-realtime";
 import type { ChatMessage } from "@/lib/types";
 
 export function useChats() {
@@ -10,7 +11,7 @@ export function useChats() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClient();
+  const supabase = getClient();
 
   const fetch = useCallback(async () => {
     setLoading(true);
@@ -24,6 +25,15 @@ export function useChats() {
   }, [supabase]);
 
   useEffect(() => { fetch(); }, [fetch]);
+
+  // Realtime: bot responses appear instantly
+  useRealtimeSubscription({
+    table: "chats",
+    events: ["INSERT"],
+    onInsert: (row) => setMessages((prev) =>
+      prev.some((m) => m.id === (row as { id: string }).id) ? prev : [...prev, mapChat(row)]
+    ),
+  });
 
   const sendMessage = useCallback(async (content: string, role: "user" | "bot" = "user") => {
     const { data: u } = await supabase.auth.getUser();
@@ -41,7 +51,6 @@ export function useChats() {
 
   const clearMessages = useCallback(async () => {
     setMessages([]);
-    // Delete all user's chat messages
     await supabase.from("chats").delete().neq("id", "");
   }, [supabase]);
 

@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { getClient } from "@/lib/supabase/client";
 import { mapNote, unmapNote } from "@/lib/db/mappers";
+import { useRealtimeSubscription } from "./use-realtime";
 import type { Note } from "@/lib/types";
 
 export function useNotes() {
@@ -10,7 +11,7 @@ export function useNotes() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClient();
+  const supabase = getClient();
 
   const fetch = useCallback(async () => {
     setLoading(true);
@@ -23,7 +24,7 @@ export function useNotes() {
 
     if (err) { setError(err.message); setLoading(false); return; }
 
-    const mapped = (data ?? []).map((row) => {
+    const mapped = (data ?? []).map((row: Record<string, unknown>) => {
       const projName = (row.projects as { name: string } | null)?.name ?? "";
       return mapNote(row, projName);
     });
@@ -32,6 +33,31 @@ export function useNotes() {
   }, [supabase]);
 
   useEffect(() => { fetch(); }, [fetch]);
+
+  // Realtime: note changes from other tabs
+  // Note: realtime rows don't include joined project name,
+  // so we look it up from existing notes or refetch
+  useRealtimeSubscription({
+    table: "notes",
+    onInsert: (row) => {
+      const r = row as { id: string; project_id?: string };
+      if (notes.some((n) => n.id === r.id)) return;
+      // Refetch to get the joined project name
+      fetch();
+    },
+    onUpdate: (row) => {
+      const r = row as { id: string; project_id?: string };
+      // Find existing note to preserve project name
+      const existing = notes.find((n) => n.id === r.id);
+      const projName = existing?.proj ?? "";
+      setNotes((prev) =>
+        prev.map((n) => n.id === r.id ? mapNote(row, projName) : n)
+      );
+    },
+    onDelete: (old) => setNotes((prev) =>
+      prev.filter((n) => n.id !== (old as { id: string }).id)
+    ),
+  });
 
   const createNote = useCallback(async (title: string, projectId: string, content = "") => {
     const { data: u } = await supabase.auth.getUser();

@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { getClient } from "@/lib/supabase/client";
 import { mapWorker, unmapWorker } from "@/lib/db/mappers";
+import { useRealtimeSubscription } from "./use-realtime";
 import type { Worker } from "@/lib/types";
 
 let cache: { data: Worker[]; ts: number } | null = null;
@@ -13,7 +14,7 @@ export function useWorkers() {
   const [loading, setLoading] = useState(!cache);
   const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClient();
+  const supabase = getClient();
 
   const fetch = useCallback(async (force = false) => {
     if (!force && cache && Date.now() - cache.ts < TTL) {
@@ -34,6 +35,27 @@ export function useWorkers() {
   }, [supabase]);
 
   useEffect(() => { fetch(); }, [fetch]);
+
+  // Realtime: worker status changes, new workers
+  useRealtimeSubscription({
+    table: "workers",
+    onInsert: (row) => {
+      cache = null;
+      setWorkers((prev) =>
+        prev.some((w) => w.id === (row as { id: string }).id) ? prev : [...prev, mapWorker(row)]
+      );
+    },
+    onUpdate: (row) => {
+      cache = null;
+      setWorkers((prev) =>
+        prev.map((w) => w.id === (row as { id: string }).id ? mapWorker(row) : w)
+      );
+    },
+    onDelete: (old) => {
+      cache = null;
+      setWorkers((prev) => prev.filter((w) => w.id !== (old as { id: string }).id));
+    },
+  });
 
   const addWorker = useCallback(async (w: Omit<Worker, "id">) => {
     const { data: u } = await supabase.auth.getUser();

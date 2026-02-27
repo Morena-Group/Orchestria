@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { getClient } from "@/lib/supabase/client";
 import { mapTask, unmapTask } from "@/lib/db/mappers";
+import { useRealtimeSubscription } from "./use-realtime";
 import type { Task, TaskStatus } from "@/lib/types";
 
 export function useTasks(projectId?: string) {
@@ -10,7 +11,7 @@ export function useTasks(projectId?: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClient();
+  const supabase = getClient();
 
   const fetch = useCallback(async () => {
     setLoading(true);
@@ -23,6 +24,21 @@ export function useTasks(projectId?: string) {
   }, [supabase, projectId]);
 
   useEffect(() => { fetch(); }, [fetch]);
+
+  // Realtime: live task updates across tabs / from workers
+  useRealtimeSubscription({
+    table: "tasks",
+    filter: projectId ? `project_id=eq.${projectId}` : undefined,
+    onInsert: (row) => setTasks((prev) =>
+      prev.some((t) => t.id === (row as { id: string }).id) ? prev : [...prev, mapTask(row)]
+    ),
+    onUpdate: (row) => setTasks((prev) =>
+      prev.map((t) => t.id === (row as { id: string }).id ? mapTask(row) : t)
+    ),
+    onDelete: (old) => setTasks((prev) =>
+      prev.filter((t) => t.id !== (old as { id: string }).id)
+    ),
+  });
 
   const createTask = useCallback(async (t: Partial<Task>) => {
     const { data: u } = await supabase.auth.getUser();

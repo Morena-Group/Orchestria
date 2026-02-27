@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { getClient } from "@/lib/supabase/client";
 import { mapNotification } from "@/lib/db/mappers";
+import { useRealtimeSubscription } from "./use-realtime";
 import type { Notification } from "@/lib/types";
 
 export function useNotifications() {
@@ -10,7 +11,7 @@ export function useNotifications() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClient();
+  const supabase = getClient();
 
   const fetch = useCallback(async () => {
     setLoading(true);
@@ -24,6 +25,17 @@ export function useNotifications() {
   }, [supabase]);
 
   useEffect(() => { fetch(); }, [fetch]);
+
+  // Realtime: new notifications appear instantly (bell badge)
+  useRealtimeSubscription({
+    table: "notifications",
+    onInsert: (row) => setNotifications((prev) =>
+      prev.some((n) => n.id === (row as { id: string }).id) ? prev : [mapNotification(row), ...prev]
+    ),
+    onUpdate: (row) => setNotifications((prev) =>
+      prev.map((n) => n.id === (row as { id: string }).id ? mapNotification(row) : n)
+    ),
+  });
 
   const markRead = useCallback(async (id: string) => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));

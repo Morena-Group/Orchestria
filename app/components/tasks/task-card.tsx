@@ -5,23 +5,28 @@ import type { Task } from "@/lib/types";
 import { PRI } from "@/lib/constants/status";
 import { WORKERS } from "@/lib/data/workers";
 import { Avatar } from "@/components/ui/avatar";
+import { TaskCardActions } from "./task-card-actions";
 
 interface TaskCardProps {
   task: Task;
   onClick: () => void;
+  onAction?: (taskId: string, actionId: string, comment?: string) => void;
 }
 
-export function TaskCard({ task, onClick }: TaskCardProps) {
+export function TaskCard({ task, onClick, onAction }: TaskCardProps) {
   const worker = WORKERS.find((w) => w.id === task.w);
 
   return (
     <div
       onClick={onClick}
-      className="p-3 rounded-lg cursor-pointer group glass-input hover:border-[rgba(200,169,110,0.15)] transition-all duration-150"
+      className="p-3 rounded-lg cursor-pointer group glass-input hover:border-[rgba(200,169,110,0.15)] transition-all duration-150 relative"
     >
       <div className="flex items-center gap-1.5 mb-2 min-w-0">
         {task.lock && <Lock size={12} className="text-accent flex-shrink-0" />}
-        <span className="text-sm font-medium truncate text-text-primary">{task.title}</span>
+        <span className="text-sm font-medium truncate text-text-primary flex-1">{task.title}</span>
+        {onAction && (
+          <TaskCardActions task={task} onAction={onAction} />
+        )}
       </div>
 
       {task.block && (

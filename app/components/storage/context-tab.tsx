@@ -4,7 +4,10 @@ import { useState } from "react";
 import { KNOWLEDGE_INDEX, COMPACTION_LOG } from "@/lib/data/storage";
 import { PROJECTS } from "@/lib/data/projects";
 import { Label } from "@/components/ui/label";
-import { Globe, Clock, Settings, Check, Pin, X, CheckCircle2, Sparkles } from "lucide-react";
+import {
+  Globe, Clock, Settings, Check, Pin, X, CheckCircle2, Sparkles,
+  ChevronDown, ChevronRight, Eye,
+} from "lucide-react";
 
 const MODES = [
   { id: "full" as const, l: "Full Overview", desc: "Top N facts across ALL projects and time. Wide coverage, less depth per item.", icon: Globe, best: "New projects, small knowledge bases" },
@@ -17,6 +20,9 @@ export function ContextTab() {
   const [tokenBudget, setTokenBudget] = useState(8000);
   const [pinnedDocs, setPinnedDocs] = useState(["ki1", "ki2"]);
   const [excludedProjects, setExcludedProjects] = useState<string[]>([]);
+  const [showCustomize, setShowCustomize] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [showCompaction, setShowCompaction] = useState(false);
 
   const totalIndexTokens = KNOWLEDGE_INDEX.reduce((s, ki) => s + ki.tokens, 0);
   const pinnedTokens = KNOWLEDGE_INDEX.filter((ki) => pinnedDocs.includes(ki.id)).reduce((s, ki) => s + ki.tokens, 0);
@@ -24,7 +30,7 @@ export function ContextTab() {
   return (
     <div className="flex-1 overflow-y-auto p-6">
       {/* Context Modes */}
-      <div className="mb-8">
+      <div className="mb-6">
         <h3 className="text-sm font-semibold mb-1" style={{ color: "var(--color-text-primary)" }}>Context Mode</h3>
         <p className="text-[10px] mb-4" style={{ color: "var(--color-text-muted)" }}>
           Controls how the orchestrator selects which knowledge to load into its context window.
@@ -62,86 +68,21 @@ export function ContextTab() {
         </div>
       </div>
 
-      {/* Custom Mode Settings */}
-      {contextMode === "custom" && (
-        <div className="mb-8 p-4 rounded-xl border" style={{ borderColor: "var(--color-border-default)", backgroundColor: "var(--color-bg-card)" }}>
-          <h4 className="text-xs font-semibold mb-3" style={{ color: "var(--color-text-primary)" }}>Custom Mode Settings</h4>
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <Label>Similarity Weight</Label>
-              <input type="range" min="0" max="100" defaultValue="70" className="flex-1 accent-[#c9a96e]" />
-              <span className="text-xs w-8" style={{ color: "var(--color-text-secondary)" }}>0.7</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <Label>Recency Weight</Label>
-              <input type="range" min="0" max="100" defaultValue="30" className="flex-1 accent-[#c9a96e]" />
-              <span className="text-xs w-8" style={{ color: "var(--color-text-secondary)" }}>0.3</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <Label>Similarity Threshold</Label>
-              <input type="range" min="0" max="100" defaultValue="60" className="flex-1 accent-[#c9a96e]" />
-              <span className="text-xs w-8" style={{ color: "var(--color-text-secondary)" }}>0.6</span>
-            </div>
-            <div>
-              <Label>Pinned Documents ({pinnedDocs.length})</Label>
-              <div className="flex flex-wrap gap-1.5 mt-1">
-                {KNOWLEDGE_INDEX.filter((ki) => pinnedDocs.includes(ki.id)).map((ki) => (
-                  <div key={ki.id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg" style={{ backgroundColor: "var(--color-bg-elevated)" }}>
-                    <Pin size={10} style={{ color: "var(--color-accent)" }} />
-                    <span className="text-[10px]" style={{ color: "var(--color-text-primary)" }}>{ki.label}</span>
-                    <button onClick={() => setPinnedDocs((p) => p.filter((x) => x !== ki.id))} className="p-0.5 rounded hover:bg-white/5">
-                      <X size={8} style={{ color: "var(--color-text-muted)" }} />
-                    </button>
-                  </div>
-                ))}
-                <button className="px-2 py-1 rounded-lg text-[10px] border border-dashed" style={{ borderColor: "var(--color-border-default)", color: "var(--color-text-muted)" }}>
-                  + Pin
-                </button>
-              </div>
-            </div>
-            <div>
-              <Label>Excluded Projects</Label>
-              <div className="flex gap-2 mt-1">
-                {PROJECTS.map((p) => {
-                  const ex = excludedProjects.includes(p.id);
-                  return (
-                    <label key={p.id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg cursor-pointer" style={{ backgroundColor: "var(--color-bg-elevated)" }}>
-                      <input
-                        type="checkbox"
-                        checked={ex}
-                        onChange={() =>
-                          setExcludedProjects((prev) =>
-                            prev.includes(p.id) ? prev.filter((x) => x !== p.id) : [...prev, p.id]
-                          )
-                        }
-                        className="accent-red-500"
-                      />
-                      <span className="text-[10px]" style={{ color: "var(--color-text-primary)" }}>{p.name}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
+      {/* Token Budget + Summary — always visible */}
+      <div className="mb-6 p-4 rounded-xl border" style={{ borderColor: "var(--color-border-default)", backgroundColor: "var(--color-bg-card)" }}>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>
+              {totalIndexTokens.toLocaleString()}
+            </span>
+            <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              / {tokenBudget.toLocaleString()} tokens
+            </span>
           </div>
-        </div>
-      )}
-
-      {/* Token Budget */}
-      <div className="mb-8">
-        <h3 className="text-sm font-semibold mb-1" style={{ color: "var(--color-text-primary)" }}>Token Budget</h3>
-        <p className="text-[10px] mb-4" style={{ color: "var(--color-text-muted)" }}>
-          Maximum tokens allocated to historical knowledge in the orchestrator&apos;s context window.
-        </p>
-        <div className="p-4 rounded-xl border" style={{ borderColor: "var(--color-border-default)", backgroundColor: "var(--color-bg-card)" }}>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>
-                {totalIndexTokens.toLocaleString()}
-              </span>
-              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                / {tokenBudget.toLocaleString()} tokens
-              </span>
-            </div>
+          <div className="flex items-center gap-3">
+            <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
+              {KNOWLEDGE_INDEX.length} entries &bull; {pinnedDocs.length} pinned
+            </span>
             <select
               value={tokenBudget}
               onChange={(e) => setTokenBudget(Number(e.target.value))}
@@ -153,73 +94,204 @@ export function ContextTab() {
               <option value={32000}>32K (maximum)</option>
             </select>
           </div>
-          <div className="h-3 rounded-full overflow-hidden flex" style={{ backgroundColor: "var(--color-bg-deep)" }}>
-            <div className="h-full" style={{ width: `${Math.min((pinnedTokens / tokenBudget) * 100, 100)}%`, backgroundColor: "var(--color-accent)" }} title="Pinned Docs" />
-            <div className="h-full" style={{ width: `${Math.min(((totalIndexTokens - pinnedTokens) / tokenBudget) * 100, 100)}%`, backgroundColor: "var(--color-accent-hover)" }} title="Unpinned Index" />
+        </div>
+        <div className="h-3 rounded-full overflow-hidden flex" style={{ backgroundColor: "var(--color-bg-deep)" }}>
+          <div className="h-full" style={{ width: `${Math.min((pinnedTokens / tokenBudget) * 100, 100)}%`, backgroundColor: "var(--color-accent)" }} title="Pinned Docs" />
+          <div className="h-full" style={{ width: `${Math.min(((totalIndexTokens - pinnedTokens) / tokenBudget) * 100, 100)}%`, backgroundColor: "var(--color-accent-hover)" }} title="Unpinned Index" />
+        </div>
+        <div className="flex items-center gap-4 mt-2">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "var(--color-accent)" }} />
+            <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>Pinned ({pinnedTokens})</span>
           </div>
-          <div className="flex items-center gap-4 mt-2">
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "var(--color-accent)" }} />
-              <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>Pinned ({pinnedTokens})</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "var(--color-accent-hover)" }} />
-              <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>Index ({totalIndexTokens - pinnedTokens})</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-sm border" style={{ backgroundColor: "var(--color-bg-deep)", borderColor: "var(--color-border-default)" }} />
-              <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>Available ({(tokenBudget - totalIndexTokens).toLocaleString()})</span>
-            </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "var(--color-accent-hover)" }} />
+            <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>Index ({totalIndexTokens - pinnedTokens})</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-sm border" style={{ backgroundColor: "var(--color-bg-deep)", borderColor: "var(--color-border-default)" }} />
+            <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>Available ({(tokenBudget - totalIndexTokens).toLocaleString()})</span>
           </div>
         </div>
       </div>
 
-      {/* Compaction Log */}
-      <div>
-        <h3 className="text-sm font-semibold mb-1" style={{ color: "var(--color-text-primary)" }}>Compaction Log</h3>
-        <p className="text-[10px] mb-3" style={{ color: "var(--color-text-muted)" }}>
-          After task completion, raw steps are compacted into memory facts. This keeps the database lean.
-        </p>
-        <div className="space-y-2">
-          {COMPACTION_LOG.map((cl) => (
-            <div key={cl.id} className="flex items-center gap-3 p-3 rounded-xl border" style={{ borderColor: "var(--color-border-default)", backgroundColor: "var(--color-bg-card)" }}>
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "var(--color-bg-elevated)" }}>
-                {cl.status === "done" ? (
-                  <CheckCircle2 size={16} style={{ color: "var(--color-accent)" }} />
-                ) : (
-                  <Clock size={16} style={{ color: "var(--color-accent)" }} />
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="text-xs block truncate" style={{ color: "var(--color-text-primary)" }}>{cl.task}</span>
-                <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>{cl.run} &bull; {cl.date}</span>
-              </div>
-              {cl.status === "done" ? (
-                <>
-                  <div className="text-center">
-                    <span className="text-sm font-bold block" style={{ color: "var(--color-accent)" }}>{cl.factsExtracted}</span>
-                    <span className="text-[9px]" style={{ color: "var(--color-text-muted)" }}>facts</span>
+      {/* Customize — only for Custom mode */}
+      {contextMode === "custom" && (
+        <div className="mb-4">
+          <button
+            onClick={() => setShowCustomize(!showCustomize)}
+            className="flex items-center gap-2 text-xs font-medium mb-2 transition-colors"
+            style={{ color: showCustomize ? "var(--color-accent)" : "var(--color-text-secondary)" }}
+          >
+            <Settings size={14} />
+            Customize Weights & Filters
+            {showCustomize ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+          </button>
+          {showCustomize && (
+            <div className="p-4 rounded-xl border" style={{ borderColor: "var(--color-border-default)", backgroundColor: "var(--color-bg-card)" }}>
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <Label>Similarity Weight</Label>
+                  <input type="range" min="0" max="100" defaultValue="70" className="flex-1 accent-[#c9a96e]" />
+                  <span className="text-xs w-8" style={{ color: "var(--color-text-secondary)" }}>0.7</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Label>Recency Weight</Label>
+                  <input type="range" min="0" max="100" defaultValue="30" className="flex-1 accent-[#c9a96e]" />
+                  <span className="text-xs w-8" style={{ color: "var(--color-text-secondary)" }}>0.3</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Label>Similarity Threshold</Label>
+                  <input type="range" min="0" max="100" defaultValue="60" className="flex-1 accent-[#c9a96e]" />
+                  <span className="text-xs w-8" style={{ color: "var(--color-text-secondary)" }}>0.6</span>
+                </div>
+                <div>
+                  <Label>Pinned Documents ({pinnedDocs.length})</Label>
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {KNOWLEDGE_INDEX.filter((ki) => pinnedDocs.includes(ki.id)).map((ki) => (
+                      <div key={ki.id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg" style={{ backgroundColor: "var(--color-bg-elevated)" }}>
+                        <Pin size={10} style={{ color: "var(--color-accent)" }} />
+                        <span className="text-[10px]" style={{ color: "var(--color-text-primary)" }}>{ki.label}</span>
+                        <button onClick={() => setPinnedDocs((p) => p.filter((x) => x !== ki.id))} className="p-0.5 rounded hover:bg-white/5">
+                          <X size={8} style={{ color: "var(--color-text-muted)" }} />
+                        </button>
+                      </div>
+                    ))}
+                    <button className="px-2 py-1 rounded-lg text-[10px] border border-dashed" style={{ borderColor: "var(--color-border-default)", color: "var(--color-text-muted)" }}>
+                      + Pin
+                    </button>
                   </div>
-                  <div className="text-center">
-                    <span className="text-sm font-bold block" style={{ color: "var(--color-error)" }}>{cl.stepsDeleted}</span>
-                    <span className="text-[9px]" style={{ color: "var(--color-text-muted)" }}>steps deleted</span>
+                </div>
+                <div>
+                  <Label>Excluded Projects</Label>
+                  <div className="flex gap-2 mt-1">
+                    {PROJECTS.map((p) => {
+                      const ex = excludedProjects.includes(p.id);
+                      return (
+                        <label key={p.id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg cursor-pointer" style={{ backgroundColor: "var(--color-bg-elevated)" }}>
+                          <input
+                            type="checkbox"
+                            checked={ex}
+                            onChange={() =>
+                              setExcludedProjects((prev) =>
+                                prev.includes(p.id) ? prev.filter((x) => x !== p.id) : [...prev, p.id]
+                              )
+                            }
+                            className="accent-red-500"
+                          />
+                          <span className="text-[10px]" style={{ color: "var(--color-text-primary)" }}>{p.name}</span>
+                        </label>
+                      );
+                    })}
                   </div>
-                </>
-              ) : (
-                <span className="text-[10px]" style={{ color: "var(--color-accent)" }}>{cl.note}</span>
-              )}
+                </div>
+              </div>
             </div>
-          ))}
+          )}
         </div>
-        <div className="mt-3 p-3 rounded-xl" style={{ backgroundColor: "var(--color-bg-card)" }}>
-          <div className="flex items-center gap-2">
-            <Sparkles size={14} style={{ color: "var(--color-accent)" }} />
-            <span className="text-xs" style={{ color: "var(--color-text-primary)" }}>How compaction works</span>
+      )}
+
+      {/* Preview context */}
+      <div className="mb-4">
+        <button
+          onClick={() => setShowPreview(!showPreview)}
+          className="flex items-center gap-2 text-xs font-medium mb-2 transition-colors"
+          style={{ color: showPreview ? "var(--color-accent)" : "var(--color-text-secondary)" }}
+        >
+          <Eye size={14} />
+          Preview Context Window
+          {showPreview ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+        </button>
+        {showPreview && (
+          <div className="p-4 rounded-xl border" style={{ borderColor: "var(--color-border-default)", backgroundColor: "var(--color-bg-card)" }}>
+            <p className="text-[10px] mb-3" style={{ color: "var(--color-text-muted)" }}>
+              What the orchestrator would see with current settings:
+            </p>
+            <div className="space-y-1.5">
+              {KNOWLEDGE_INDEX
+                .filter((ki) => !excludedProjects.includes(ki.proj === "AI SaaS Platform" ? "p1" : ki.proj === "Marketing Automation" ? "p2" : ""))
+                .sort((a, b) => (pinnedDocs.includes(b.id) ? 1 : 0) - (pinnedDocs.includes(a.id) ? 1 : 0))
+                .map((ki) => {
+                  const isPinned = pinnedDocs.includes(ki.id);
+                  return (
+                    <div
+                      key={ki.id}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
+                      style={{ backgroundColor: "var(--color-bg-elevated)" }}
+                    >
+                      {isPinned && <Pin size={10} style={{ color: "var(--color-accent)" }} />}
+                      <span className="text-[10px] flex-1 truncate" style={{ color: "var(--color-text-primary)" }}>
+                        {ki.label}
+                      </span>
+                      <span className="text-[9px]" style={{ color: "var(--color-text-muted)" }}>
+                        {ki.tokens} tok
+                      </span>
+                    </div>
+                  );
+                })}
+            </div>
           </div>
-          <p className="text-[10px] mt-1 leading-relaxed" style={{ color: "var(--color-text-muted)" }}>
-            During execution, every agent step is logged for full transparency. After completion, key facts and decisions are extracted into Memory Facts with vector embeddings. Raw steps are then deleted. This preserves knowledge while keeping the database lean.
-          </p>
-        </div>
+        )}
+      </div>
+
+      {/* Compaction Log — collapsible, at bottom */}
+      <div>
+        <button
+          onClick={() => setShowCompaction(!showCompaction)}
+          className="flex items-center gap-2 text-xs font-medium mb-2 transition-colors"
+          style={{ color: showCompaction ? "var(--color-accent)" : "var(--color-text-secondary)" }}
+        >
+          <Sparkles size={14} />
+          Compaction Log
+          {showCompaction ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+        </button>
+        {showCompaction && (
+          <div>
+            <p className="text-[10px] mb-3" style={{ color: "var(--color-text-muted)" }}>
+              After task completion, raw steps are compacted into memory facts. This keeps the database lean.
+            </p>
+            <div className="space-y-2">
+              {COMPACTION_LOG.map((cl) => (
+                <div key={cl.id} className="flex items-center gap-3 p-3 rounded-xl border" style={{ borderColor: "var(--color-border-default)", backgroundColor: "var(--color-bg-card)" }}>
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "var(--color-bg-elevated)" }}>
+                    {cl.status === "done" ? (
+                      <CheckCircle2 size={16} style={{ color: "var(--color-accent)" }} />
+                    ) : (
+                      <Clock size={16} style={{ color: "var(--color-accent)" }} />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs block truncate" style={{ color: "var(--color-text-primary)" }}>{cl.task}</span>
+                    <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>{cl.run} &bull; {cl.date}</span>
+                  </div>
+                  {cl.status === "done" ? (
+                    <>
+                      <div className="text-center">
+                        <span className="text-sm font-bold block" style={{ color: "var(--color-accent)" }}>{cl.factsExtracted}</span>
+                        <span className="text-[9px]" style={{ color: "var(--color-text-muted)" }}>facts</span>
+                      </div>
+                      <div className="text-center">
+                        <span className="text-sm font-bold block" style={{ color: "var(--color-error)" }}>{cl.stepsDeleted}</span>
+                        <span className="text-[9px]" style={{ color: "var(--color-text-muted)" }}>steps deleted</span>
+                      </div>
+                    </>
+                  ) : (
+                    <span className="text-[10px]" style={{ color: "var(--color-accent)" }}>{cl.note}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 p-3 rounded-xl" style={{ backgroundColor: "var(--color-bg-card)" }}>
+              <div className="flex items-center gap-2">
+                <Sparkles size={14} style={{ color: "var(--color-accent)" }} />
+                <span className="text-xs" style={{ color: "var(--color-text-primary)" }}>How compaction works</span>
+              </div>
+              <p className="text-[10px] mt-1 leading-relaxed" style={{ color: "var(--color-text-muted)" }}>
+                During execution, every agent step is logged for full transparency. After completion, key facts and decisions are extracted into Memory Facts with vector embeddings. Raw steps are then deleted. This preserves knowledge while keeping the database lean.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

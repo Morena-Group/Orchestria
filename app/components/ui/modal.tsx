@@ -7,11 +7,12 @@ interface ModalProps {
   open: boolean;
   onClose: () => void;
   title?: string;
+  header?: ReactNode;
   maxWidth?: string;
   children: ReactNode;
 }
 
-export function Modal({ open, onClose, title, maxWidth = "max-w-lg", children }: ModalProps) {
+export function Modal({ open, onClose, title, header, maxWidth = "max-w-lg", children }: ModalProps) {
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
@@ -32,7 +33,9 @@ export function Modal({ open, onClose, title, maxWidth = "max-w-lg", children }:
         className={`rounded-xl border border-border-default bg-bg-deep ${maxWidth} w-full max-h-[85vh] overflow-hidden flex flex-col`}
         onClick={(e) => e.stopPropagation()}
       >
-        {title && (
+        {header ? (
+          header
+        ) : title ? (
           <div className="flex items-center justify-between p-4 border-b border-border-default">
             <h3 className="text-lg font-semibold text-text-primary">{title}</h3>
             <button
@@ -42,7 +45,7 @@ export function Modal({ open, onClose, title, maxWidth = "max-w-lg", children }:
               <X size={16} />
             </button>
           </div>
-        )}
+        ) : null}
         {children}
       </div>
     </div>

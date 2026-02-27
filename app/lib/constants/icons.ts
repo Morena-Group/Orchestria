@@ -1,6 +1,7 @@
 import {
   Edit3, Clock, Check, Play, AlertTriangle, Eye, CheckCircle2,
   XCircle, Pause, Search, Zap, Layers, RefreshCw,
+  ArrowRight, Trash2, UserPlus, MessageSquare,
   type LucideIcon,
 } from "lucide-react";
 
@@ -18,8 +19,16 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Zap,
   Layers,
   RefreshCw,
+  ArrowRight,
+  Trash2,
+  UserPlus,
+  MessageSquare,
 };
 
 export function getStatusIcon(name: string): LucideIcon {
   return ICON_MAP[name] || Clock;
+}
+
+export function getActionIcon(name: string): LucideIcon {
+  return ICON_MAP[name] || Play;
 }

@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import {
-  X, Lock, CheckCircle2, AlertTriangle, Send, Play, Check,
-  Code, File, RefreshCw, MessageSquare, Eye, Pause, XCircle,
-  ArrowRight, Upload, Download, Archive, Trash2,
+  X, Lock, CheckCircle2, AlertTriangle, Send,
+  Code, File, RefreshCw, MessageSquare, Eye,
+  Upload, Download, Archive, Trash2, Play, Check,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { getActionIcon } from "@/lib/constants/icons";
+import { TASK_ACTIONS } from "./task-actions-config";
 import type { Task } from "@/lib/types";
 import { ST, PRI } from "@/lib/constants/status";
 import { WORKERS } from "@/lib/data/workers";
@@ -21,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
 
 const TIMELINE_ICONS: Record<string, LucideIcon> = {
   step: Play, tool: Code, decision: Check, output: File,
@@ -46,52 +49,47 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
     { id: "settings", l: "Settings" },
   ];
 
-  return (
-    <div
-      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="rounded-xl border border-border-default bg-bg-deep w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="p-4 border-b border-border-default flex-shrink-0">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge color={sc.c} bg={sc.bg}>{sc.l}</Badge>
-              {task.lock && <Lock size={14} className="text-accent" />}
-              {PRI[task.p] && (
-                <span className="text-xs" style={{ color: PRI[task.p].c }}>{PRI[task.p].l}</span>
-              )}
-              {task.tags.map((t) => (
-                <span key={t} className="px-1.5 py-0.5 rounded text-[10px] bg-accent-dim text-accent-hover">
-                  {t}
-                </span>
-              ))}
-            </div>
-            <button onClick={onClose} className="p-1.5 rounded hover:bg-white/5 text-text-secondary">
-              <X size={16} />
-            </button>
-          </div>
-          <h2 className="text-lg font-semibold mb-1 text-text-primary">{task.title}</h2>
-          <div className="flex items-center gap-4">
-            {worker && (
-              <div className="flex items-center gap-2">
-                <Avatar type={worker.type} size={20} role={worker.role} />
-                <span className="text-xs text-text-secondary">
-                  {worker.name}{worker.isHuman ? " (Human)" : ""}
-                </span>
-              </div>
-            )}
-            <span className="text-[10px] text-text-muted">Created 2 days ago</span>
-            {task.sub > 0 && (
-              <span className="text-xs flex items-center gap-1 text-text-secondary">
-                <CheckCircle2 size={12} /> {task.subD}/{task.sub} subtasks
-              </span>
-            )}
-          </div>
+  const headerContent = (
+    <div className="p-4 border-b border-border-default flex-shrink-0">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge color={sc.c} bg={sc.bg}>{sc.l}</Badge>
+          {task.lock && <Lock size={14} className="text-accent" />}
+          {PRI[task.p] && (
+            <span className="text-xs" style={{ color: PRI[task.p].c }}>{PRI[task.p].l}</span>
+          )}
+          {task.tags.map((t) => (
+            <span key={t} className="px-1.5 py-0.5 rounded text-[10px] bg-accent-dim text-accent-hover">
+              {t}
+            </span>
+          ))}
         </div>
+        <button onClick={onClose} className="p-1.5 rounded hover:bg-white/5 text-text-secondary">
+          <X size={16} />
+        </button>
+      </div>
+      <h2 className="text-lg font-semibold mb-1 text-text-primary">{task.title}</h2>
+      <div className="flex items-center gap-4">
+        {worker && (
+          <div className="flex items-center gap-2">
+            <Avatar type={worker.type} size={20} role={worker.role} />
+            <span className="text-xs text-text-secondary">
+              {worker.name}{worker.isHuman ? " (Human)" : ""}
+            </span>
+          </div>
+        )}
+        <span className="text-[10px] text-text-muted">Created 2 days ago</span>
+        {task.sub > 0 && (
+          <span className="text-xs flex items-center gap-1 text-text-secondary">
+            <CheckCircle2 size={12} /> {task.subD}/{task.sub} subtasks
+          </span>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <Modal open={true} onClose={onClose} header={headerContent} maxWidth="max-w-4xl">
 
         {/* Blocked banner */}
         {task.block && (
@@ -474,30 +472,25 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
         {/* Footer actions */}
         <div className="flex items-center justify-between p-4 border-t border-border-default flex-shrink-0">
           <div className="flex items-center gap-2">
-            {task.s === "review" && (
-              <>
-                <Button primary><Check size={14} /> Approve</Button>
-                <Button><XCircle size={14} /> Reject</Button>
-              </>
-            )}
-            {task.s === "draft" && (
-              <Button primary><ArrowRight size={14} /> Move to Pending</Button>
-            )}
-            {task.s === "pending" && (
-              <Button primary><Play size={14} /> Start</Button>
-            )}
-            {task.s === "completed" && (
-              <Button><RefreshCw size={14} /> Rerun</Button>
-            )}
-            {task.s === "running" && (
-              <Button><Pause size={14} /> Pause</Button>
-            )}
+            {(TASK_ACTIONS[task.s] ?? [])
+              .filter((a) => a.variant !== "danger")
+              .map((action) => {
+                const Icon = getActionIcon(action.icon);
+                return (
+                  <Button
+                    key={action.id}
+                    primary={action.variant === "primary"}
+                    onClick={() => console.log("Task modal action:", action.id, task.id)}
+                  >
+                    <Icon size={14} /> {action.label}
+                  </Button>
+                );
+              })}
           </div>
           <span className="text-[10px] text-text-muted">
             ID: {task.id} &bull; Last updated 2h ago
           </span>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

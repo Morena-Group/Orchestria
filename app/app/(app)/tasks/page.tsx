@@ -19,6 +19,10 @@ export default function TasksPage() {
   const [sortBy, setSortBy] = useState("status");
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
+  function handleAction(taskId: string, actionId: string, comment?: string) {
+    console.log("Task action:", { taskId, actionId, comment });
+  }
+
   // Filter to active project (p1 for now)
   const proj = "p1";
   const tasks = TASKS.filter((t) => t.pr === proj);
@@ -116,7 +120,7 @@ export default function TasksPage() {
                     style={{ backgroundColor: `${s.c}08` }}
                   >
                     {ct.map((t) => (
-                      <TaskCard key={t.id} task={t} onClick={() => setSelectedTask(t)} />
+                      <TaskCard key={t.id} task={t} onClick={() => setSelectedTask(t)} onAction={handleAction} />
                     ))}
                     <button
                       onClick={() => setShowNew(true)}
@@ -142,16 +146,17 @@ export default function TasksPage() {
               <span className="w-28">Worker</span>
               <span className="w-20">Subtasks</span>
               <span className="w-24">Tags</span>
+              <span className="w-8" />
             </div>
             {sortedTasks.map((t) => (
-              <TaskListRow key={t.id} task={t} onClick={() => setSelectedTask(t)} />
+              <TaskListRow key={t.id} task={t} onClick={() => setSelectedTask(t)} onAction={handleAction} />
             ))}
           </div>
         </div>
       )}
 
       {/* Modals */}
-      {showNew && <NewTaskModal onClose={() => setShowNew(false)} />}
+      <NewTaskModal open={showNew} onClose={() => setShowNew(false)} />
       {selectedTask && <TaskModal task={selectedTask} onClose={() => setSelectedTask(null)} />}
     </div>
   );

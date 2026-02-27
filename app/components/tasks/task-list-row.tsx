@@ -6,13 +6,15 @@ import { ST, PRI } from "@/lib/constants/status";
 import { WORKERS } from "@/lib/data/workers";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { TaskListActions } from "./task-list-actions";
 
 interface TaskListRowProps {
   task: Task;
   onClick: () => void;
+  onAction?: (taskId: string, actionId: string, comment?: string) => void;
 }
 
-export function TaskListRow({ task, onClick }: TaskListRowProps) {
+export function TaskListRow({ task, onClick, onAction }: TaskListRowProps) {
   const worker = WORKERS.find((w) => w.id === task.w);
   const sc = ST[task.s];
   const pc = PRI[task.p];
@@ -66,6 +68,11 @@ export function TaskListRow({ task, onClick }: TaskListRowProps) {
           <span className="text-[9px] text-text-muted">+{task.tags.length - 2}</span>
         )}
       </div>
+      {onAction && (
+        <div className="w-8">
+          <TaskListActions task={task} onAction={onAction} />
+        </div>
+      )}
     </div>
   );
 }

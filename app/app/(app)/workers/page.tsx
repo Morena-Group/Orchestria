@@ -42,7 +42,7 @@ export default function WorkersPage() {
         </div>
       )}
 
-      {showModal && <AddWorkerModal onClose={() => setShowModal(false)} />}
+      <AddWorkerModal open={showModal} onClose={() => setShowModal(false)} />
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { TaskTimelineEvent, TaskArtifact, TaskComment } from "@/lib/data/tasks";
+import type { TaskTimelineEvent, TaskArtifact, TaskComment } from "@/lib/types";
 
 interface TaskDetail {
   description: string;

@@ -291,6 +291,30 @@ export interface ActivityConfig {
   desc: string;
 }
 
+// Task detail sub-types
+export interface TaskTimelineEvent {
+  time: string;
+  actor: string;
+  type: string;
+  text: string;
+}
+
+export interface TaskArtifact {
+  name: string;
+  size: string;
+  type: string;
+  date: string;
+}
+
+export interface TaskComment {
+  id: string;
+  author: string;
+  isHuman: boolean;
+  type?: string;
+  time: string;
+  text: string;
+}
+
 // Nav item
 export interface NavItem {
   id: string;

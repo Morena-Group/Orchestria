@@ -7,12 +7,6 @@ interface VersionsDropdownProps {
   open: boolean;
 }
 
-const VERSIONS = [
-  { id: "v3", name: "v3 — After adding 2FA", date: "Today 10:30" },
-  { id: "v2", name: "v2 — Expanded testing", date: "Today 09:15" },
-  { id: "v1", name: "v1 — Initial plan", date: "Yesterday" },
-];
-
 export function VersionsDropdown({ open }: VersionsDropdownProps) {
   if (!open) return null;
 
@@ -30,28 +24,12 @@ export function VersionsDropdown({ open }: VersionsDropdownProps) {
       >
         Version History
       </h4>
-      {VERSIONS.map((v) => (
-        <div
-          key={v.id}
-          className="flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-white/5"
-        >
-          <GitBranch size={12} style={{ color: "var(--color-accent)" }} />
-          <div>
-            <span
-              className="text-xs block"
-              style={{ color: "var(--color-text-primary)" }}
-            >
-              {v.name}
-            </span>
-            <span
-              className="text-[10px]"
-              style={{ color: "var(--color-text-muted)" }}
-            >
-              {v.date}
-            </span>
-          </div>
-        </div>
-      ))}
+      <div className="py-3 text-center">
+        <GitBranch size={16} className="mx-auto mb-1" style={{ color: "var(--color-text-muted)" }} />
+        <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
+          No versions saved yet.
+        </p>
+      </div>
       <div
         className="mt-2 pt-2 border-t"
         style={{ borderColor: "var(--color-border-default)" }}

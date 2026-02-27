@@ -81,7 +81,7 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
             </span>
           </div>
         )}
-        <span className="text-[10px] text-text-muted">Created 2 days ago</span>
+        <span className="text-[10px] text-text-muted">ID: {task.id}</span>
         {task.sub > 0 && (
           <span className="text-xs flex items-center gap-1 text-text-secondary">
             <CheckCircle2 size={12} /> {task.subD}/{task.sub} subtasks
@@ -190,16 +190,7 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
                   <span className="text-[10px] uppercase tracking-wider block mb-1.5 text-text-muted">
                     Dependencies
                   </span>
-                  {task.id === "t4" ? (
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-glass">
-                      <span className="text-xs text-text-primary">
-                        Design database schema for user auth
-                      </span>
-                      <Badge color="#a1a1aa" bg="#1c1f2e" small>Completed</Badge>
-                    </div>
-                  ) : (
-                    <span className="text-xs text-text-muted">No dependencies</span>
-                  )}
+                  <span className="text-xs text-text-muted">No dependencies configured</span>
                 </div>
 
                 {/* Comments */}
@@ -489,7 +480,7 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
               })}
           </div>
           <span className="text-[10px] text-text-muted">
-            ID: {task.id} &bull; Last updated 2h ago
+            ID: {task.id}
           </span>
         </div>
     </Modal>
